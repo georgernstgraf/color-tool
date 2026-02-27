@@ -19,7 +19,7 @@ echo "2. Generating Themes..."
 
 # Krokus (with Dark Image)
 echo "   - Krokus"
-python ColorSim.py img/bg-krokus.jpg --output bs/krokus-theme.css
+python ColorSim.py img/bg-krokus.jpg --output bs/krokus-theme.css --clusters 12 --dark-clusters 24
 
 # Herbst
 echo "   - Herbst"

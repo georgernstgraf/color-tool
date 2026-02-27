@@ -39,85 +39,63 @@ def test_variable_coverage():
             
     return all_passed
 
-def test_contrast():
-    # Sample palette from a "Lego" like image
-    palette = [
-        (222, 226, 226), # light gray
-        (13, 110, 253),  # blue
-        (25, 135, 84),   # green
-        (220, 53, 69),   # red
-        (255, 193, 7),   # yellow
-        (33, 37, 41)     # dark
+def test_actual_theme_contrast():
+    print("\n--- ACTUAL THEME CONTRAST TEST ---")
+    theme_paths = list(Path("bs").glob("*-theme.css"))
+    
+    pairs_to_check = [
+        ("--CTBS-BodyColor", "--CTBS-BodyBg", "Body Contrast"),
+        ("--CTBS-EmphasisColor", "--CTBS-BodyBg", "Emphasis Contrast"),
+        ("--CTBS-PrimaryTextEmphasis", "--CTBS-PrimaryBgSubtle", "Primary Text/Subtle Contrast"),
+        ("--CTBS-SuccessTextEmphasis", "--CTBS-SuccessBgSubtle", "Success Text/Subtle Contrast"),
+        ("--CTBS-DangerTextEmphasis", "--CTBS-DangerBgSubtle", "Danger Text/Subtle Contrast"),
+        ("--CTBS-WarningTextEmphasis", "--CTBS-WarningBgSubtle", "Warning Text/Subtle Contrast"),
+        ("--CTBS-DarkThemeBodyColor", "--CTBS-DarkThemeBodyBg", "Dark Body Contrast"),
+        ("--CTBS-DarkThemePrimaryTextEmphasis", "--CTBS-DarkThemePrimaryBgSubtle", "Dark Primary Text/Subtle Contrast"),
+        ("--CTBS-DarkThemeSuccessTextEmphasis", "--CTBS-DarkThemeSuccessBgSubtle", "Dark Success Text/Subtle Contrast"),
+        ("--CTBS-DarkThemeDangerTextEmphasis", "--CTBS-DarkThemeDangerBgSubtle", "Dark Danger Text/Subtle Contrast"),
+        ("--CTBS-DarkThemeWarningTextEmphasis", "--CTBS-DarkThemeWarningBgSubtle", "Dark Warning Text/Subtle Contrast"),
     ]
     
-    ctbs_vars = [
-        "--CTBS-Primary",
-        "--CTBS-PrimaryBgSubtle",
-        "--CTBS-PrimaryTextEmphasis",
-        "--CTBS-SuccessBgSubtle",
-        "--CTBS-SuccessTextEmphasis",
-        "--CTBS-DangerBgSubtle",
-        "--CTBS-DangerTextEmphasis",
-        "--CTBS-WarningBgSubtle",
-        "--CTBS-WarningTextEmphasis",
-        "--CTBS-BodyColor",
-        "--CTBS-BodyBg",
-        "--CTBS-EmphasisColor",
-        # Dark Theme variables
-        "--CTBS-DarkThemePrimaryBgSubtle",
-        "--CTBS-DarkThemePrimaryTextEmphasis",
-        "--CTBS-DarkThemeSuccessBgSubtle",
-        "--CTBS-DarkThemeSuccessTextEmphasis",
-        "--CTBS-DarkThemeDangerBgSubtle",
-        "--CTBS-DarkThemeDangerTextEmphasis",
-        "--CTBS-DarkThemeWarningBgSubtle",
-        "--CTBS-DarkThemeWarningTextEmphasis",
-        "--CTBS-DarkThemeBodyColor",
-        "--CTBS-DarkThemeBodyBg"
-    ]
-    
-    css = ColorSim.generate_css(palette, None, ctbs_vars)
-    print("--- GENERATED CSS (Subset) ---")
-    
-    # Simple parser for the output to check contrast
-    lines = css.split('\n')
-    colors = {}
-    for line in lines:
-        if ':' in line and '--CTBS-' in line:
-            parts = line.split(':')
-            name = parts[0].strip()
-            val = parts[1].strip().rstrip(';')
-            if val.startswith('#'):
-                colors[name] = ColorSim.hex_to_rgb(val)
-    
-    def check_pair(text_var, bg_var, label):
-        if text_var in colors and bg_var in colors:
-            text_rgb = colors[text_var]
-            bg_rgb = colors[bg_var]
-            ratio = ColorSim.contrast_ratio(text_rgb, bg_rgb)
-            status = "PASS (AAA)" if ratio >= 7.0 else "FAIL (AAA)"
-            print(f"[{label}] {text_var} on {bg_var}: {ratio:.2f} - {status}")
-            return ratio >= 7.0
-        return True
-
-    print("\n--- LIGHT THEME CONTRAST ---")
-    check_pair("--CTBS-BodyColor", "--CTBS-BodyBg", "Light")
-    check_pair("--CTBS-EmphasisColor", "--CTBS-BodyBg", "Light")
-    check_pair("--CTBS-PrimaryTextEmphasis", "--CTBS-PrimaryBgSubtle", "Light")
-    check_pair("--CTBS-SuccessTextEmphasis", "--CTBS-SuccessBgSubtle", "Light")
-    check_pair("--CTBS-DangerTextEmphasis", "--CTBS-DangerBgSubtle", "Light")
-    check_pair("--CTBS-WarningTextEmphasis", "--CTBS-WarningBgSubtle", "Light")
-
-    print("\n--- DARK THEME CONTRAST ---")
-    # In DarkTheme context, BodyBg is usually the dark color
-    check_pair("--CTBS-DarkThemeBodyColor", "--CTBS-DarkThemeBodyBg", "Dark")
-    check_pair("--CTBS-DarkThemePrimaryTextEmphasis", "--CTBS-DarkThemePrimaryBgSubtle", "Dark")
-    check_pair("--CTBS-DarkThemeSuccessTextEmphasis", "--CTBS-DarkThemeSuccessBgSubtle", "Dark")
-    check_pair("--CTBS-DarkThemeDangerTextEmphasis", "--CTBS-DarkThemeDangerBgSubtle", "Dark")
-    check_pair("--CTBS-DarkThemeWarningTextEmphasis", "--CTBS-DarkThemeWarningBgSubtle", "Dark")
+    all_passed = True
+    for theme_path in theme_paths:
+        print(f"\nTesting {theme_path.name}:")
+        theme_content = theme_path.read_text()
+        colors = {}
+        for line in theme_content.split('\n'):
+            if ':' in line and '--CTBS-' in line:
+                parts = line.split(':')
+                name = parts[0].strip()
+                val = parts[1].strip().rstrip(';')
+                if val.startswith('#'):
+                    colors[name] = ColorSim.hex_to_rgb(val)
+        
+        theme_passed = True
+        for text_var, bg_var, label in pairs_to_check:
+            if text_var in colors and bg_var in colors:
+                text_rgb = colors[text_var]
+                bg_rgb = colors[bg_var]
+                ratio = ColorSim.contrast_ratio(text_rgb, bg_rgb)
+                if ratio < 7.0:
+                    status = "FAIL (AAA)"
+                    theme_passed = False
+                    all_passed = False
+                    print(f"  [FAIL] {label}: {text_var} on {bg_var} is {ratio:.2f}")
+                else:
+                    # Optional: print success
+                    # print(f"  [PASS] {label}: {ratio:.2f}")
+                    pass
+        
+        if theme_passed:
+            print(f"  [PASS] All contrast checks passed for {theme_path.name}")
+            
+    return all_passed
 
 if __name__ == "__main__":
-    success = test_variable_coverage()
-    test_contrast()
-    if not success:
+    cov_success = test_variable_coverage()
+    contrast_success = test_actual_theme_contrast()
+    
+    if not cov_success or not contrast_success:
         sys.exit(1)
+    print("\nAll tests passed successfully.")
+

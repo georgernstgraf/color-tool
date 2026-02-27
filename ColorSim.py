@@ -436,21 +436,28 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
         # Apply contrast and variation logic
         if "TextEmphasis" in search_name:
             # For Alert Text Emphasis, check against matching BgSubtle
-            base_rgb = rgb
-            bg_subtle = lighten(base_rgb, 40) if effective_light_bg else darken(base_rgb, 40)
+            h, s, l = rgb_to_hsl(rgb)
+            if effective_light_bg:
+                bg_subtle = hsl_to_rgb((h, s, 94))
+            else:
+                bg_subtle = hsl_to_rgb((h, s, 10))
             rgb = ensure_contrast_ratio(rgb, bg_subtle, 7.0)
             rgb = ensure_contrast_ratio(rgb, current_body_bg, 7.0)
-        elif "BgSubtle" in search_name or (is_bg and matched_base in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger"] and any(c in search_name for c in ["Table", "Alert", "Badge"])):
+        elif "BgSubtle" in search_name or (is_bg and matched_base in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger", "Light", "Dark"] and any(c in search_name for c in ["Table", "Alert", "Badge"])):
             # Subtle backgrounds for components
-            rgb = lighten(rgb, 40) if effective_light_bg else darken(rgb, 40)
-            # Ensure it's very light or very dark for 7.0 contrast
-            l = get_luminance(rgb)
-            if effective_light_bg and l < 0.85:
-                rgb = lighten(rgb, 10)
-            elif not effective_light_bg and l > 0.15:
-                rgb = darken(rgb, 10)
+            h, s, l = rgb_to_hsl(rgb)
+            if effective_light_bg:
+                # Target very light: l >= 94%
+                rgb = hsl_to_rgb((h, s, max(l, 94)))
+            else:
+                # Target very dark: l <= 10%
+                rgb = hsl_to_rgb((h, s, min(l, 10)))
         elif "BorderSubtle" in search_name:
-            rgb = lighten(rgb, 30) if effective_light_bg else darken(rgb, 30)
+            h, s, l = rgb_to_hsl(rgb)
+            if effective_light_bg:
+                rgb = hsl_to_rgb((h, s, max(l, 85)))
+            else:
+                rgb = hsl_to_rgb((h, s, min(l, 25)))
         elif "Hover" in search_name or "Active" in search_name:
             if is_bg:
                 # If it's a background, adjust relative to base bg
@@ -530,12 +537,15 @@ def main():
     parser.add_argument("--no-blur", action="store_false", dest="blur", help="Skip blur")
     parser.add_argument("--output", "-o", help="Output file")
     parser.add_argument("--clusters", "-c", type=int, default=12, help="Number of clusters (light)")
-    parser.add_argument("--dark-clusters", type=int, default=12, help="Number of clusters (dark)")
+    parser.add_argument("--dark-clusters", type=int, help="Number of clusters (dark). Defaults to --clusters.")
     parser.add_argument("--vars-file", default="bs/ctbs-variables.css", help="Path to variables file")
     parser.add_argument("--overrides-file", default="bs/bootstrap-overrides.css", help="Path to overrides file to detect used variables")
     
     args = parser.parse_args()
     
+    if args.dark_clusters is None:
+        args.dark_clusters = args.clusters
+        
     try:
         ctbs_vars = parse_ctbs_variables(args.vars_file)
         # Also parse overrides to ensure we generate everything that's actually used

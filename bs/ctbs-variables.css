@@ -36,10 +36,10 @@
   --CTBS-BoxShadow-1Rgb: 13, 110, 253;
   --CTBS-BoxShadow-2: #ffffff;
   --CTBS-BoxShadow-2Rgb: 255, 255, 255;
-  --CTBS-BoxShadow-3: rgba(0, 0, 0, 0.075);
-  --CTBS-BoxShadow-3Rgb: 0, 0, 0;
-  --CTBS-BoxShadow-4: rgba(255, 255, 255, 0.15);
-  --CTBS-BoxShadow-4Rgb: 255, 255, 255;
+  --CTBS-BoxShadow-3: rgba(255, 255, 255, 0.15);
+  --CTBS-BoxShadow-3Rgb: 255, 255, 255;
+  --CTBS-BoxShadow-4: rgba(0, 0, 0, 0.075);
+  --CTBS-BoxShadow-4Rgb: 0, 0, 0;
   --CTBS-BoxShadow: rgba(0, 0, 0, 0.15);
   --CTBS-BoxShadowInset: rgba(0, 0, 0, 0.075);
   --CTBS-BoxShadowInsetRgb: 0, 0, 0;
@@ -501,9 +501,9 @@
   --CTBS-ListGroupActiveBorderColorRgb: 13, 110, 253;
   --CTBS-ListGroupActiveColor: #ffffff;
   --CTBS-ListGroupActiveColorRgb: 255, 255, 255;
-  --CTBS-MaskImage-1: rgba(0, 0, 0, 0.8);
+  --CTBS-MaskImage-1: #000000;
   --CTBS-MaskImage-1Rgb: 0, 0, 0;
-  --CTBS-MaskImage: #000000;
+  --CTBS-MaskImage: rgba(0, 0, 0, 0.8);
   --CTBS-MaskImageRgb: 0, 0, 0;
   --CTBS-Orange: #fd7e14;
   --CTBS-OrangeRgb: 253, 126, 20;
@@ -943,9 +943,9 @@
   --CTBS-WarningTableStripedColorRgb: 0, 0, 0;
   --CTBS-WarningTextEmphasis: #664d03;
   --CTBS-WarningTextEmphasisRgb: 102, 77, 3;
-  --CTBS-WebkitMaskImage-1: rgba(0, 0, 0, 0.8);
+  --CTBS-WebkitMaskImage-1: #000000;
   --CTBS-WebkitMaskImage-1Rgb: 0, 0, 0;
-  --CTBS-WebkitMaskImage: #000000;
+  --CTBS-WebkitMaskImage: rgba(0, 0, 0, 0.8);
   --CTBS-WebkitMaskImageRgb: 0, 0, 0;
   --CTBS-White: #ffffff;
   --CTBS-WhiteRgb: 255, 255, 255;
