@@ -3,8 +3,8 @@
 
 :root {
     /* Opacity of glassmorphism elements (Cards, Navbars, Alerts) */
-    --CTBS-GlassOpacity: 0.3 !important;
+    --CTBS-GlassOpacity: 0.3;
 
     /* Amount of background blur behind glass elements */
-    --CTBS-GlassBlur: 8px !important;
+    --CTBS-GlassBlur: 8px;
 }

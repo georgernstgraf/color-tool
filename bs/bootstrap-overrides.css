@@ -69,7 +69,7 @@
   --bs-dark-border-subtle: var(--CTBS-DarkBorderSubtle);
   --bs-white-rgb: var(--CTBS-WhiteRgb);
   --bs-black-rgb: var(--CTBS-BlackRgb);
-  --bs-gradient: linear-gradient(180deg, var(--CTBS-Gradient-1), var(--CTBS-Gradient));
+  --bs-gradient: linear-gradient(180deg, var(--CTBS-Gradient), var(--CTBS-Gradient-1));
   --bs-body-color: var(--CTBS-BodyColor);
   --bs-body-color-rgb: var(--CTBS-BodyColorRgb);
   --bs-body-bg: var(--CTBS-BodyBg);
@@ -302,7 +302,7 @@
   color: var(--CTBS-Color-1);
 }
 .btn {
-  --bs-btn-box-shadow: inset 0 1px 0 var(--CTBS-BoxShadow-4), 0 1px 1px var(--CTBS-BoxShadow-3);
+  --bs-btn-box-shadow: inset 0 1px 0 var(--CTBS-BoxShadow-3), 0 1px 1px var(--CTBS-BoxShadow-4);
 }
 .btn-primary {
   --bs-btn-color: var(--CTBS-PrimaryBtnColor);
@@ -625,25 +625,49 @@
   --bs-alert-bg: rgba(var(--CTBS-PrimaryBgSubtleRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
+[data-bs-theme=dark] .alert-primary {
+  --bs-alert-color: #9ec5fe;
+  --bs-alert-link-color: #9ec5fe;
+}
 .alert-secondary {
   --bs-alert-bg: rgba(var(--CTBS-SecondaryBgSubtleRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
+}
+[data-bs-theme=dark] .alert-secondary {
+  --bs-alert-color: #dee2e6;
+  --bs-alert-link-color: #dee2e6;
 }
 .alert-success {
   --bs-alert-bg: rgba(var(--CTBS-SuccessBgSubtleRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
+[data-bs-theme=dark] .alert-success {
+  --bs-alert-color: #a3cfbb;
+  --bs-alert-link-color: #a3cfbb;
+}
 .alert-info {
   --bs-alert-bg: rgba(var(--CTBS-InfoBgSubtleRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
+}
+[data-bs-theme=dark] .alert-info {
+  --bs-alert-color: #9eeaf9;
+  --bs-alert-link-color: #9eeaf9;
 }
 .alert-warning {
   --bs-alert-bg: rgba(var(--CTBS-WarningBgSubtleRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
+[data-bs-theme=dark] .alert-warning {
+  --bs-alert-color: #ffe69c;
+  --bs-alert-link-color: #ffe69c;
+}
 .alert-danger {
   --bs-alert-bg: rgba(var(--CTBS-DangerBgSubtleRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
+}
+[data-bs-theme=dark] .alert-danger {
+  --bs-alert-color: #f1aeb5;
+  --bs-alert-link-color: #f1aeb5;
 }
 .alert-light {
   --bs-alert-bg: rgba(var(--CTBS-LightBgSubtleRgb), var(--CTBS-GlassOpacity));

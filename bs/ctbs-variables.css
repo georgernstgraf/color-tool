@@ -36,10 +36,10 @@
   --CTBS-BoxShadow-1Rgb: 13, 110, 253;
   --CTBS-BoxShadow-2: #ffffff;
   --CTBS-BoxShadow-2Rgb: 255, 255, 255;
-  --CTBS-BoxShadow-3: rgba(0, 0, 0, 0.075);
-  --CTBS-BoxShadow-3Rgb: 0, 0, 0;
-  --CTBS-BoxShadow-4: rgba(255, 255, 255, 0.15);
-  --CTBS-BoxShadow-4Rgb: 255, 255, 255;
+  --CTBS-BoxShadow-3: rgba(255, 255, 255, 0.15);
+  --CTBS-BoxShadow-3Rgb: 255, 255, 255;
+  --CTBS-BoxShadow-4: rgba(0, 0, 0, 0.075);
+  --CTBS-BoxShadow-4Rgb: 0, 0, 0;
   --CTBS-BoxShadow: rgba(0, 0, 0, 0.15);
   --CTBS-BoxShadowInset: rgba(0, 0, 0, 0.075);
   --CTBS-BoxShadowInsetRgb: 0, 0, 0;
@@ -340,9 +340,9 @@
   --CTBS-FormValidBorderColorRgb: 25, 135, 84;
   --CTBS-FormValidColor: #198754;
   --CTBS-FormValidColorRgb: 25, 135, 84;
-  --CTBS-Gradient-1: rgba(255, 255, 255, 0.15);
+  --CTBS-Gradient-1: rgba(255, 255, 255, 0);
   --CTBS-Gradient-1Rgb: 255, 255, 255;
-  --CTBS-Gradient: rgba(255, 255, 255, 0);
+  --CTBS-Gradient: rgba(255, 255, 255, 0.15);
   --CTBS-GradientRgb: 255, 255, 255;
   --CTBS-Gray100: #f8f9fa;
   --CTBS-Gray100Rgb: 248, 249, 250;

@@ -348,9 +348,6 @@ class BootstrapExtractor:
                     if selector == "[data-bs-theme=dark]":
                         color_lines.append(f"{indent}  --bs-heading-color: var(--CTBS-DarkThemeEmphasisColor);")
                         color_lines.append(f"{indent}  --bs-emphasis-color: var(--CTBS-DarkThemeEmphasisColor);")
-                    elif selector == ":root" or selector == ":root, [data-bs-theme=light]":
-                         # We already handle :root in extract_base_variables, but let's be safe if it appears elsewhere
-                         pass
 
                     for prop_line in properties:
                         prop_line = prop_line.strip()
@@ -381,6 +378,7 @@ class BootstrapExtractor:
                                             color_lines.append(f"{indent}  backdrop-filter: blur(var(--CTBS-GlassBlur));")
                                         else:
                                             color_lines.append(f"{indent}  {prop}: {new_val};")
+                                            color_lines.append(f"{indent}  backdrop-filter: blur(var(--CTBS-GlassBlur));")
                                     else:
                                         color_lines.append(f"{indent}  {prop}: {new_val};")
                                 elif is_glass_selector and is_glass_prop and 'var(--bs-' in val:
@@ -411,6 +409,21 @@ class BootstrapExtractor:
                     
                     if color_lines:
                         res.append(f"{indent}{selector} {{\n" + "\n".join(color_lines) + f"\n{indent}}}")
+                        
+                        # Inject Dark Mode AAA overrides for alerts
+                        if ".alert-" in selector and not selector.startswith("@"):
+                            if ".alert-primary" in selector:
+                                res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n{indent}  --bs-alert-color: #9ec5fe;\n{indent}  --bs-alert-link-color: #9ec5fe;\n{indent}}}")
+                            elif ".alert-secondary" in selector:
+                                res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n{indent}  --bs-alert-color: #dee2e6;\n{indent}  --bs-alert-link-color: #dee2e6;\n{indent}}}")
+                            elif ".alert-success" in selector:
+                                res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n{indent}  --bs-alert-color: #a3cfbb;\n{indent}  --bs-alert-link-color: #a3cfbb;\n{indent}}}")
+                            elif ".alert-danger" in selector:
+                                res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n{indent}  --bs-alert-color: #f1aeb5;\n{indent}  --bs-alert-link-color: #f1aeb5;\n{indent}}}")
+                            elif ".alert-warning" in selector:
+                                res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n{indent}  --bs-alert-color: #ffe69c;\n{indent}  --bs-alert-link-color: #ffe69c;\n{indent}}}")
+                            elif ".alert-info" in selector:
+                                res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n{indent}  --bs-alert-color: #9eeaf9;\n{indent}  --bs-alert-link-color: #9eeaf9;\n{indent}}}")
                 
                 i = j
             return "\n".join(res)

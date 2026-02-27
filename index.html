@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en"
+      data-bs-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Theme Preview - Bootstrap 5.3.8</title>
+
+    <!-- Original Framework -->
+    <link rel="stylesheet"
+          href="bs/bootstrap-5.3.8.css">
+
+    <!-- UI Config (Global knobs for opacity/blur) -->
+    <link rel="stylesheet"
+          href="bs/ui-config.css">
+
+    <!-- Theme placeholder (will be swapped by specific files) -->
+    <link id="themeStylesheet" rel="stylesheet"
+          href="bs/herbst-theme.css">
+
+    <!-- Component Overrides (Apply variables to components) -->
+    <link rel="stylesheet"
+          href="bs/bootstrap-overrides.css">
+
+    <style>
+        body {
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.8;
+            z-index: -1;
+            transition: background-image 0.5s ease-in-out;
+        }
+
+        .content-wrapper {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: auto;
+            margin-bottom: 5rem;
+        }
+
+        .component-section {
+            margin-bottom: 3rem;
+            padding: 1.5rem;
+            border-radius: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content-wrapper card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 id="themeTitle">Theme Preview</h1>
+            <div class="d-flex gap-3 align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <label class="small text-nowrap">Glass Opacity:</label>
+                    <input type="range" id="opacityRange" class="form-range" min="0" max="1" step="0.05" value="0.3" style="width: 100px;">
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <label class="small text-nowrap">Blur:</label>
+                    <input type="range" id="blurRange" class="form-range" min="0" max="20" step="1" value="8" style="width: 100px;">
+                </div>
+                <select id="themeSelect" class="form-select w-auto">
+                    <option value="herbst">Herbst (Autumn)</option>
+                    <option value="krokus">Krokus (Spring)</option>
+                    <option value="sommer">Sommer (Summer)</option>
+                    <option value="lego">Lego (Bright)</option>
+                    <option value="loewe">Loewe (Lion)</option>
+                </select>
+                <button id="themeToggle"
+                        class="btn btn-outline-primary">Toggle Dark Mode</button>
+            </div>
+        </div>
+
+        <!-- BUTTONS SECTION -->
+        <section class="component-section border">
+            <h3>Buttons & Button Groups</h3>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <h5>Solid Buttons</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-primary">Primary</button>
+                        <button class="btn btn-secondary">Secondary</button>
+                        <button class="btn btn-success">Success</button>
+                        <button class="btn btn-info text-dark">Info</button>
+                        <button class="btn btn-warning text-dark">Warning</button>
+                        <button class="btn btn-danger">Danger</button>
+                        <button class="btn btn-light text-dark">Light</button>
+                        <button class="btn btn-dark">Dark</button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h5>Outline Buttons</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-outline-primary">Primary</button>
+                        <button class="btn btn-outline-secondary">Secondary</button>
+                        <button class="btn btn-outline-success">Success</button>
+                        <button class="btn btn-outline-info">Info</button>
+                        <button class="btn btn-outline-warning">Warning</button>
+                        <button class="btn btn-outline-danger">Danger</button>
+                    </div>
+                </div>
+                <div class="col-12 mt-3">
+                    <h5>Button Groups & Sizing</h5>
+                    <div class="btn-group me-2" role="group">
+                        <button type="button" class="btn btn-primary">Left</button>
+                        <button type="button" class="btn btn-primary">Middle</button>
+                        <button type="button" class="btn btn-primary">Right</button>
+                    </div>
+                    <button class="btn btn-primary btn-lg">Large</button>
+                    <button class="btn btn-primary btn-sm">Small</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ALERTS & BADGES SECTION -->
+        <section class="component-section border">
+            <div class="row">
+                <div class="col-md-8">
+                    <h3>Alerts (WCAG AAA Contrast Test)</h3>
+                    <div class="alert alert-primary alert-dismissible fade show" role="alert">
+                        <strong>Primary!</strong> This alert should be readable and AAA compliant on glass.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    <div class="alert alert-success" role="alert">
+                        <strong>Success!</strong> Testing dark theme text contrast.
+                    </div>
+                    <div class="alert alert-warning" role="alert">
+                        <strong>Warning!</strong> Check the emphasis color contrast.
+                    </div>
+                    <div class="alert alert-danger" role="alert">
+                        <strong>Danger!</strong> High visibility required here.
+                    </div>
+                    <div class="alert alert-info" role="alert">
+                        <strong>Info!</strong> Glassmorphism opacity test.
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <h3>Badges</h3>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="badge text-bg-primary">Primary</span>
+                        <span class="badge text-bg-secondary">Secondary</span>
+                        <span class="badge text-bg-success">Success</span>
+                        <span class="badge text-bg-danger">Danger</span>
+                        <span class="badge text-bg-warning">Warning</span>
+                        <span class="badge text-bg-info">Info</span>
+                    </div>
+                    <h5>Pill Badges</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge rounded-pill text-bg-primary">1</span>
+                        <span class="badge rounded-pill text-bg-success">99+</span>
+                        <span class="badge rounded-pill text-bg-info">New</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CARDS SECTION -->
+        <section class="component-section border">
+            <h3>Cards & Glassmorphism</h3>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-primary text-white">Default Header</div>
+                        <div class="card-body">
+                            <h5 class="card-title">Card Title</h5>
+                            <p class="card-text">Standard card content with themed background and glass effect.</p>
+                            <a href="#" class="btn btn-primary">Action</a>
+                        </div>
+                        <div class="card-footer text-body-secondary">2 days ago</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-bg-primary h-100 border-0">
+                        <div class="card-header border-bottom border-white border-opacity-25">Primary Color Card</div>
+                        <div class="card-body">
+                            <p class="card-text">Testing text contrast on primary color backgrounds.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-success">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">Bordered Success</h5>
+                            <p class="card-text">Testing how theme colors apply to borders and headings.</p>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item bg-transparent">List Item 1</li>
+                                <li class="list-group-item bg-transparent">List Item 2</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FORMS SECTION -->
+        <section class="component-section border">
+            <h3>Forms & Inputs</h3>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Text Input (Focus Test)</label>
+                        <input type="text" class="form-control" placeholder="Focus me to see ring color">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Select Menu</label>
+                        <select class="form-select">
+                            <option selected>Open this select menu</option>
+                            <option value="1">One</option>
+                            <option value="2">Two</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Range</label>
+                        <input type="range" class="form-range" id="customRange2">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked>
+                        <label class="form-check-label" for="flexCheckChecked">Checked checkbox</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault" checked>
+                        <label class="form-check-label" for="flexSwitchCheckDefault">Checked switch</label>
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="basic-addon1">@</span>
+                        <input type="text" class="form-control" placeholder="Username">
+                    </div>
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Recipient's username">
+                        <button class="btn btn-outline-secondary" type="button">Button</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TABLES SECTION -->
+        <section class="component-section border">
+            <h3>Tables</h3>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Sample Heading</th>
+                            <th>Status</th>
+                            <th>Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="table-primary">
+                            <td>Primary</td>
+                            <td>Themed background</td>
+                            <td><span class="badge text-bg-primary">Active</span></td>
+                            <td>
+                                <div class="progress" role="progressbar" style="height: 10px">
+                                    <div class="progress-bar" style="width: 25%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="table-success">
+                            <td>Success</td>
+                            <td>Positive result</td>
+                            <td><span class="badge text-bg-success">Done</span></td>
+                            <td>
+                                <div class="progress" role="progressbar" style="height: 10px">
+                                    <div class="progress-bar bg-success" style="width: 100%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="table-warning">
+                            <td>Warning</td>
+                            <td>Action required</td>
+                            <td><span class="badge text-bg-warning text-dark">Pending</span></td>
+                            <td>
+                                <div class="progress" role="progressbar" style="height: 10px">
+                                    <div class="progress-bar bg-warning" style="width: 60%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="table-danger">
+                            <td>Danger</td>
+                            <td>Critical failure</td>
+                            <td><span class="badge text-bg-danger">Error</span></td>
+                            <td>
+                                <div class="progress" role="progressbar" style="height: 10px">
+                                    <div class="progress-bar bg-danger" style="width: 85%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="table-info">
+                            <td>Info</td>
+                            <td>General info</td>
+                            <td><span class="badge text-bg-info text-dark">Help</span></td>
+                            <td>
+                                <div class="progress" role="progressbar" style="height: 10px">
+                                    <div class="progress-bar bg-info" style="width: 45%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- NAVS & TABS SECTION -->
+        <section class="component-section border">
+            <h3>Navs & Pagination</h3>
+            <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" type="button">Active Pill</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="pills-profile-tab" data-bs-toggle="pill" type="button">Normal Pill</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link disabled" type="button" disabled>Disabled</button>
+                </li>
+            </ul>
+            <nav>
+                <ul class="pagination">
+                    <li class="page-item disabled"><a class="page-link">Previous</a></li>
+                    <li class="page-item"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item active"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                </ul>
+            </nav>
+        </section>
+    </div>
+
+    <script>
+        const themeStylesheet = document.getElementById('themeStylesheet');
+        const themeSelect = document.getElementById('themeSelect');
+        const themeTitle = document.getElementById('themeTitle');
+        const themeToggle = document.getElementById('themeToggle');
+        const opacityRange = document.getElementById('opacityRange');
+        const blurRange = document.getElementById('blurRange');
+        
+        // Background image mapping
+        const backgrounds = {
+            'herbst': { light: 'img/herbst.jpg', dark: 'img/herbst.jpg' },
+            'krokus': { light: 'img/bg-krokus.jpg', dark: 'img/bg-krokus.jpg' },
+            'sommer': { light: 'img/sommer.jpg', dark: 'img/sommer.jpg' },
+            'lego': { light: 'img/bg-lego-lightblue.png', dark: 'img/bg-lego-darkblue.png' },
+            'loewe': { light: 'img/loewe.jpg', dark: 'img/loewe.jpg' }
+        };
+
+        function updateTheme() {
+            const theme = themeSelect.value;
+            themeStylesheet.href = `bs/${theme}-theme.css`;
+            themeTitle.innerText = theme.charAt(0).toUpperCase() + theme.slice(1) + " Theme";
+            
+            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+            const bgConfig = backgrounds[theme];
+            const bgPath = isDark ? bgConfig.dark : bgConfig.light;
+
+            // Update body background
+            document.body.style.setProperty('--bg-image', `url('${bgPath}')`);
+            
+            // Set styles dynamically for the pseudo-element background
+            let style = document.getElementById('dynamic-bg-style');
+            if (!style) {
+                style = document.createElement('style');
+                style.id = 'dynamic-bg-style';
+                document.head.appendChild(style);
+            }
+            
+            const blendMode = isDark ? 'multiply' : 'normal';
+            const bgColor = isDark ? '#555' : 'transparent';
+            
+            style.innerHTML = `
+                body::before {
+                    background-image: url('${bgPath}');
+                    background-blend-mode: ${blendMode};
+                    background-color: ${bgColor};
+                }
+            `;
+        }
+
+        themeSelect.onchange = updateTheme;
+
+        themeToggle.onclick = () => {
+            const current = document.documentElement.getAttribute('data-bs-theme');
+            const next = current === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-bs-theme', next);
+            themeToggle.innerText = next === 'light' ? 'Toggle Dark Mode' : 'Toggle Light Mode';
+            updateTheme();
+        }
+
+        opacityRange.oninput = (e) => {
+            document.documentElement.style.setProperty('--CTBS-GlassOpacity', e.target.value);
+        };
+
+        blurRange.oninput = (e) => {
+            document.documentElement.style.setProperty('--CTBS-GlassBlur', e.target.value + 'px');
+        };
+
+        // Initialize
+        updateTheme();
+    </script>
+</body>
+
+</html>

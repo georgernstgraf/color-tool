@@ -23,14 +23,14 @@ python ColorSim.py img/bg-krokus.jpg --output bs/krokus-theme.css --clusters 12
 
 # Herbst
 echo "   - Herbst"
-python ColorSim.py img/herbst.jpg --output bs/herbst-theme.css
+python ColorSim.py img/herbst.jpg --output bs/herbst-theme.css --clusters 12
 
 # Sommer
 echo "   - Sommer"
-python ColorSim.py img/sommer.jpg --output bs/sommer-theme.css
+python ColorSim.py img/sommer.jpg --output bs/sommer-theme.css --clusters 12
 
 # Lego
 echo "   - Lego"
-python ColorSim.py img/bg-lego-lightblue.png --dark-image img/bg-lego-darkblue.png --output bs/lego-theme.css
+python ColorSim.py img/bg-lego-lightblue.png --dark-image img/bg-lego-darkblue.png --output bs/lego-theme.css --clusters 12
 
 echo "Done!"
