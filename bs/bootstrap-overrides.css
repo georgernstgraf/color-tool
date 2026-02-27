@@ -546,12 +546,12 @@
   --bs-btn-focus-shadow-rgb: var(--CTBS-PrimaryBtnFocusShadowRgb);
 }
 .dropdown-menu {
-  --bs-dropdown-bg: var(--bs-body-bg);
+  --bs-dropdown-bg: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
   --bs-dropdown-link-active-color: var(--CTBS-White);
   --bs-dropdown-link-active-bg: var(--CTBS-Blue);
   --bs-dropdown-header-color: var(--CTBS-Gray);
-  background-color: var(--bs-dropdown-bg);
+  background-color: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .dropdown-menu-dark {
@@ -584,21 +584,21 @@
   --bs-navbar-toggler-border-color: var(--CTBS-WhiteAlpha1);
 }
 .card {
-  --bs-card-bg: var(--bs-body-bg);
+  --bs-card-bg: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
-  background-color: var(--bs-card-bg);
+  background-color: rgba(var(--CTBS-CardBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .card-header {
-  background-color: var(--bs-card-cap-bg);
+  background-color: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .card-footer {
-  background-color: var(--bs-card-cap-bg);
+  background-color: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .card-header-tabs .nav-link.active {
-  background-color: var(--bs-card-bg);
+  background-color: rgba(var(--CTBS-CardBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .accordion {
@@ -614,39 +614,39 @@
   --bs-badge-color: var(--CTBS-White);
 }
 .alert {
-  background-color: var(--bs-alert-bg);
+  background-color: rgba(var(--CTBS-AlertBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .alert-primary {
-  --bs-alert-bg: var(--bs-primary-bg-subtle);
+  --bs-alert-bg: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .alert-secondary {
-  --bs-alert-bg: var(--bs-secondary-bg-subtle);
+  --bs-alert-bg: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .alert-success {
-  --bs-alert-bg: var(--bs-success-bg-subtle);
+  --bs-alert-bg: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .alert-info {
-  --bs-alert-bg: var(--bs-info-bg-subtle);
+  --bs-alert-bg: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .alert-warning {
-  --bs-alert-bg: var(--bs-warning-bg-subtle);
+  --bs-alert-bg: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .alert-danger {
-  --bs-alert-bg: var(--bs-danger-bg-subtle);
+  --bs-alert-bg: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .alert-light {
-  --bs-alert-bg: var(--bs-light-bg-subtle);
+  --bs-alert-bg: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .alert-dark {
-  --bs-alert-bg: var(--bs-dark-bg-subtle);
+  --bs-alert-bg: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .progress,
@@ -663,25 +663,25 @@
   --bs-list-group-active-border-color: var(--CTBS-Blue);
 }
 .list-group-item {
-  background-color: var(--bs-list-group-bg);
+  background-color: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .list-group-item.disabled,
 .list-group-item:disabled {
-  background-color: var(--bs-list-group-disabled-bg);
+  background-color: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .list-group-item.active {
-  background-color: var(--bs-list-group-active-bg);
+  background-color: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .list-group-item-action:not(.active):focus,
 .list-group-item-action:not(.active):hover {
-  background-color: var(--bs-list-group-action-hover-bg);
+  background-color: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .list-group-item-action:not(.active):active {
-  background-color: var(--bs-list-group-action-active-bg);
+  background-color: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .btn-close {
@@ -689,15 +689,15 @@
   --bs-btn-close-focus-shadow: 0 0 0 0.25rem var(--CTBS-FocusRingColor);
 }
 .toast {
-  background-color: var(--bs-toast-bg);
+  background-color: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .toast-header {
-  background-color: var(--bs-toast-header-bg);
+  background-color: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .modal-content {
-  background-color: var(--bs-modal-bg);
+  background-color: rgba(var(--CTBS-ModalBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .modal-backdrop {
@@ -728,36 +728,36 @@
 }
 @media (max-width:575.98px) {
   .offcanvas-sm {
-    background-color: var(--bs-offcanvas-bg);
+    background-color: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
     backdrop-filter: blur(var(--CTBS-GlassBlur));
   }
 }
 @media (max-width:767.98px) {
   .offcanvas-md {
-    background-color: var(--bs-offcanvas-bg);
+    background-color: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
     backdrop-filter: blur(var(--CTBS-GlassBlur));
   }
 }
 @media (max-width:991.98px) {
   .offcanvas-lg {
-    background-color: var(--bs-offcanvas-bg);
+    background-color: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
     backdrop-filter: blur(var(--CTBS-GlassBlur));
   }
 }
 @media (max-width:1199.98px) {
   .offcanvas-xl {
-    background-color: var(--bs-offcanvas-bg);
+    background-color: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
     backdrop-filter: blur(var(--CTBS-GlassBlur));
   }
 }
 @media (max-width:1399.98px) {
   .offcanvas-xxl {
-    background-color: var(--bs-offcanvas-bg);
+    background-color: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
     backdrop-filter: blur(var(--CTBS-GlassBlur));
   }
 }
 .offcanvas {
-  background-color: var(--bs-offcanvas-bg);
+  background-color: rgba(var(--CTBS-BodyBgRgb), var(--CTBS-GlassOpacity));
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .offcanvas-backdrop {

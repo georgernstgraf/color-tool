@@ -337,9 +337,8 @@ class BootstrapExtractor:
                                         if match:
                                             var_name = match.group(1)
                                             # We use the -Rgb version of the variable
-                                            glass_val = f"rgba(var({var_name}Rgb), var(--CTBS-GlassOpacity))"
-                                            # If there were other parts (like gradients), we just replace the color
-                                            new_val = re.sub(r'var\(--CTBS-[a-zA-Z0-9-]+\)', glass_val, new_val)
+                                            # IMPORTANT: Use rgba() for all glass components to respect --CTBS-GlassOpacity
+                                            new_val = f"rgba(var({var_name}Rgb), var(--CTBS-GlassOpacity))"
                                             color_lines.append(f"{indent}  {prop}: {new_val};")
                                             color_lines.append(f"{indent}  backdrop-filter: blur(var(--CTBS-GlassBlur));")
                                         else:
@@ -347,9 +346,26 @@ class BootstrapExtractor:
                                     else:
                                         color_lines.append(f"{indent}  {prop}: {new_val};")
                                 elif is_glass_selector and is_glass_prop and 'var(--bs-' in val:
-                                    # Even if no literal color found, it's a variable assignment that defines background in glass components
-                                    color_lines.append(f"{indent}  {prop}: {val};")
-                                    color_lines.append(f"{indent}  backdrop-filter: blur(var(--CTBS-GlassBlur));")
+                                    # Handle variables like --bs-body-bg or --bs-card-bg
+                                    # Convert them to our themed rgba version if possible
+                                    match = re.search(r'var\(--bs-([a-z-]+)\)', val)
+                                    if match:
+                                        bs_var = match.group(1)
+                                        # Map common body/card vars to CTBS counterparts
+                                        ctbs_map = {
+                                            'body-bg': 'BodyBg',
+                                            'card-bg': 'CardBg',
+                                            'modal-bg': 'ModalBg',
+                                            'alert-bg': 'AlertBg',
+                                            'navbar-bg': 'NavbarBg'
+                                        }
+                                        ctbs_base = ctbs_map.get(bs_var, 'BodyBg')
+                                        new_val = f"rgba(var(--CTBS-{ctbs_base}Rgb), var(--CTBS-GlassOpacity))"
+                                        color_lines.append(f"{indent}  {prop}: {new_val};")
+                                        color_lines.append(f"{indent}  backdrop-filter: blur(var(--CTBS-GlassBlur));")
+                                    else:
+                                        color_lines.append(f"{indent}  {prop}: {val};")
+                                        color_lines.append(f"{indent}  backdrop-filter: blur(var(--CTBS-GlassBlur));")
                     
                     if color_lines:
                         res.append(f"{indent}{selector} {{\n" + "\n".join(color_lines) + f"\n{indent}}}")

@@ -1,0 +1,10 @@
+/* UI CONFIGURATION KNOBS */
+/* These variables control the look and feel independently of the color palette */
+
+:root {
+    /* Opacity of glassmorphism elements (Cards, Navbars, Alerts) */
+    --CTBS-GlassOpacity: 0.7;
+
+    /* Amount of background blur behind glass elements */
+    --CTBS-GlassBlur: 10px;
+}
