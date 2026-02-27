@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bootstrap 5.3.8 Theme Test</title>
+    
+    <!-- 0. Original Framework -->
+    <link rel="stylesheet" href="bs/bootstrap-5.3.8.css">
+    
+    <!-- 1. Semantic Variable Definitions (Optional fallback) -->
+    <!-- <link rel="stylesheet" href="bs/ctbs-variables.css"> -->
+    
+    <!-- 2. Generated Theme (Overrides for the variables) -->
+    <link rel="stylesheet" href="bs/krokus-theme.css">
+    
+    <!-- 3. Component Overrides (CSS patch applying variables) -->
+    <link rel="stylesheet" href="bs/bootstrap-overrides.css">
+    
+    <style>
+        body { 
+            padding: 2rem; 
+            background-image: url('img/bg-lego-lightblue.png');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            min-height: 100vh;
+        }
+        .content-wrapper {
+            background-color: rgba(var(--CTBS-WhiteRgb), 0.85);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 1rem 3rem var(--CTBS-BlackAlpha175);
+            backdrop-filter: blur(10px);
+            max-width: 1000px;
+            margin: auto;
+        }
+        .theme-preview {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        .theme-card {
+            background-color: var(--CTBS-White);
+            border: 1px solid var(--CTBS-BorderColor);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            flex: 1;
+            min-width: 250px;
+        }
+    </style>
+</head>
+<body>
+    <div class="content-wrapper">
+        <h1>Bootstrap 5.3.8 Color Override System</h1>
+        <p><strong>Theme Source:</strong> <code>img/bg-lego-lightblue.png</code> (Set as background)</p>
+        <p>Loading Order: Bootstrap → Image Theme → Bootstrap Overrides</p>
+
+        <div class="theme-preview">
+            <div class="theme-card">
+                <h3>Buttons</h3>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary">Primary Button</button>
+                    <button type="button" class="btn btn-secondary">Secondary Button</button>
+                    <button type="button" class="btn btn-success">Success Button</button>
+                    <button type="button" class="btn btn-danger">Danger Button</button>
+                </div>
+            </div>
+            
+            <div class="theme-card">
+                <h3>Alerts</h3>
+                <div class="alert alert-primary">Primary Alert</div>
+                <div class="alert alert-success">Success Alert</div>
+                <div class="alert alert-warning">Warning Alert</div>
+            </div>
+            
+            <div class="theme-card">
+                <h3>Forms</h3>
+                <div class="mb-3">
+                    <input type="text" class="form-control" placeholder="Form Control Focus Test">
+                </div>
+                <label for="customRange1" class="form-label">Range Example</label>
+                <input type="range" class="form-range" id="customRange1">
+            </div>
+        </div>
+
+        <hr>
+        
+        <h2>Dark Theme Section</h2>
+        <div data-bs-theme="dark" class="p-4 bg-dark text-light rounded border border-secondary">
+            <h3>Interactive Elements (Dark)</h3>
+            <div class="d-flex gap-2 mb-3">
+                <button type="button" class="btn btn-primary">Primary</button>
+                <button type="button" class="btn btn-secondary">Secondary</button>
+                <button type="button" class="btn btn-outline-info">Outline Info</button>
+            </div>
+            
+            <div class="alert alert-info">
+                Info Alert in Dark Theme - Testing semantic contrast.
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lego Theme - Bootstrap 5.3.8</title>
+    
+    <!-- Original Framework -->
+    <link rel="stylesheet" href="bs/bootstrap-5.3.8.css">
+    
+    <!-- Generated Theme (Reset variables to image-based palette) -->
+    <link rel="stylesheet" href="bs/lego-theme.css">
+    
+    <!-- Component Overrides (Apply variables to components) -->
+    <link rel="stylesheet" href="bs/bootstrap-overrides.css">
+    
+    <style>
+        body { 
+            padding: 2rem; 
+            min-height: 100vh;
+        }
+        
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('img/bg-lego-lightblue.png');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.8;
+            z-index: -1;
+            transition: background-image 0.5s ease-in-out;
+        }
+
+        [data-bs-theme="dark"] body::before {
+            background-image: url('img/bg-lego-darkblue.png');
+            opacity: 0.7;
+        }
+
+        .content-wrapper {
+            padding: 2rem;
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .theme-preview {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .theme-card {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            flex: 1;
+            min-width: 250px;
+        }
+    </style>
+</head>
+<body>
+    <div class="content-wrapper card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Lego Theme</h1>
+            <button id="themeToggle" class="btn btn-outline-primary">Toggle Dark Mode</button>
+        </div>
+        
+        <p><strong>Theme Source:</strong> <code>img/bg-lego-lightblue.png</code> and <code>img/bg-lego-darkblue.png</code></p>
+
+        <div class="theme-preview">
+            <div class="theme-card">
+                <h3>Buttons</h3>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary">Primary Button</button>
+                    <button type="button" class="btn btn-secondary">Secondary Button</button>
+                    <button type="button" class="btn btn-success">Success Button</button>
+                    <button type="button" class="btn btn-danger">Danger Button</button>
+                </div>
+            </div>
+            
+            <div class="theme-card">
+                <h3>Alerts</h3>
+                <div class="alert alert-primary">Primary Alert</div>
+                <div class="alert alert-success">Success Alert</div>
+                <div class="alert alert-warning">Warning Alert</div>
+            </div>
+            
+            <div class="theme-card">
+                <h3>Forms</h3>
+                <div class="mb-3">
+                    <input type="text" class="form-control" placeholder="Form Control Focus Test">
+                </div>
+                <label for="customRange1" class="form-label">Range Example</label>
+                <input type="range" class="form-range" id="customRange1">
+            </div>
+        </div>
+
+        <hr>
+        
+        <h2>Components Preview</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">Card Header</div>
+                    <div class="card-body">
+                        <h5 class="card-title">Theme Integrated Card</h5>
+                        <p class="card-text">Testing how shadows and borders look against the theme.</p>
+                        <a href="#" class="btn btn-link">Link Styling</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr><th>#</th><th>Name</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr class="table-primary"><td>1</td><td>Active</td><td>Primary</td></tr>
+                        <tr><td>2</td><td>Idle</td><td>Default</td></tr>
+                        <tr class="table-success"><td>3</td><td>Success</td><td>Success</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const btn = document.getElementById('themeToggle');
+        btn.onclick = () => {
+            const current = document.documentElement.getAttribute('data-bs-theme');
+            const next = current === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-bs-theme', next);
+            btn.innerText = next === 'light' ? 'Toggle Dark Mode' : 'Toggle Light Mode';
+        }
+    </script>
+</body>
+</html>

@@ -8,6 +8,7 @@ Ensures WCAG AAA compliance (7:1 contrast ratio) for all color pairs.
 
 import argparse
 import sys
+import re
 from pathlib import Path
 
 from PIL import Image, ImageFilter
@@ -17,7 +18,8 @@ import colorsys
 
 def hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
     hex_color = hex_color.lstrip('#')
-    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    return (rgb[0], rgb[1], rgb[2])
 
 
 def rgb_to_hex(rgb: tuple[int, int, int]) -> str:
@@ -170,7 +172,19 @@ def extract_colors(image_path: str, blur: bool, count: int = 6) -> list:
     return palette
 
 
-def generate_css(colors: list) -> str:
+def parse_ctbs_variables(overrides_path: str) -> list[str]:
+    """Extract all --CTBS- variables from the overrides file."""
+    path = Path(overrides_path)
+    if not path.exists():
+        return []
+    
+    content = path.read_text()
+    # Find all --CTBS-... variables
+    variables = sorted(list(set(re.findall(r'--CTBS-[a-zA-Z0-9-]*', content))))
+    return variables
+
+
+def generate_css(colors: list, ctbs_vars: list[str] | None = None) -> str:
     """Generate CSS variables from extracted colors."""
     
     # Sort by saturation to find vibrant colors
@@ -210,85 +224,164 @@ def generate_css(colors: list) -> str:
     body_bg = light
     body_color = ensure_contrast(body_bg)
     
+    white = (255, 255, 255)
+    black = (0, 0, 0)
+    
+    base_map = {
+        "Primary": primary,
+        "Secondary": secondary,
+        "Success": success,
+        "Info": info,
+        "Warning": warning,
+        "Danger": danger,
+        "Light": light,
+        "Dark": dark,
+        "White": white,
+        "Black": black,
+        "BodyBg": body_bg,
+        "BodyColor": body_color,
+        "EmphasisColor": ensure_contrast(body_bg, 7.0),
+        "LinkColor": primary,
+        "BorderColor": darken(light, 15) if get_luminance(body_bg) > 0.5 else lighten(dark, 15),
+        "Gray": (108, 117, 125),
+    }
+
+    def get_ctbs_color(var_name: str) -> str:
+        name = var_name.replace("--CTBS-", "")
+        
+        # Handle RGB variant
+        is_rgb = name.endswith("Rgb")
+        base_name = name[:-3] if is_rgb else name
+        
+        # Check for dark mode context
+        is_dark_theme = "DarkTheme" in base_name
+        search_name = base_name.replace("DarkTheme", "")
+        
+        # Find the base category
+        matched_base = None
+        # Order matters: more specific categories first if they should override general ones
+        for base in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger", "Light", "Dark", "Gray", "Body", "Border", "Emphasis", "Link", "Form", "Btn", "Table", "Alert", "Badge", "Navbar", "Nav", "ListGroupItem", "Dropdown"]:
+            if base in search_name:
+                matched_base = base
+                break
+        
+        # Handle Alpha variables (e.g., --CTBS-WhiteAlpha15)
+        is_alpha = "Alpha" in search_name
+        alpha_val = "1"
+        if is_alpha:
+            match = re.search(r'Alpha(\d+)', search_name)
+            if match:
+                alpha_val = match.group(1)
+                # Convert 15 to 0.15, 5 to 0.5? 
+                # Actually my extractor names them like WhiteAlpha15 for 0.15 and WhiteAlpha5 for 0.5.
+                # If it's 1 digit and not 0, it's probably 0.X. If 2 digits, 0.XX.
+                if len(alpha_val) == 1:
+                    alpha_val = f"0.{alpha_val}"
+                else:
+                    alpha_val = f"0.{alpha_val}"
+                if alpha_val == "0.0": alpha_val = "0"
+        
+        if not matched_base:
+            # Fallback for Custom or unknown
+            if "White" in search_name:
+                rgb = (255, 255, 255)
+            elif "Black" in search_name:
+                rgb = (0, 0, 0)
+            elif "Bg" in search_name or "Background" in search_name:
+                rgb = base_map["Dark"] if is_dark_theme else base_map["Light"]
+            elif "Color" in search_name:
+                rgb = base_map["Light"] if is_dark_theme else base_map["Dark"]
+            else:
+                rgb = (128, 128, 128) # Gray fallback
+        else:
+            # Match BodyBg to Light/Dark based on theme
+            if matched_base == "Body":
+                rgb = base_map["Dark"] if is_dark_theme else base_map["Light"]
+            elif matched_base == "Emphasis":
+                rgb = base_map["Light"] if is_dark_theme else base_map["Dark"]
+            elif matched_base == "Link":
+                rgb = base_map["Primary"]
+            elif matched_base == "Border":
+                rgb = base_map["BorderColor"]
+            elif matched_base in ["Table", "Alert", "Badge", "Navbar", "Nav", "ListGroupItem", "Dropdown"]:
+                # These usually depend on the context (PrimaryTable, SuccessAlert, etc.)
+                # If no other category matched, use Gray or Secondary as base
+                rgb = base_map["Secondary"]
+            else:
+                rgb = base_map.get(matched_base, (128, 128, 128))
+            
+            # Special case: if we matched Table/Alert but also have a color category
+            for color_base in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger"]:
+                if color_base in search_name:
+                    rgb = base_map[color_base]
+                    break
+            
+            # Apply modifiers
+            # Note: in dark theme, we usually invert darkening/lightening
+            is_light_bg = get_luminance(body_bg) > 0.5
+            # If we are in a DarkTheme block, it's always dark background
+            # Otherwise it depends on the overall theme
+            effective_light_bg = is_light_bg and not is_dark_theme
+            
+            if "TextEmphasis" in search_name:
+                rgb = darken(rgb, 20) if effective_light_bg else lighten(rgb, 20)
+            elif "BgSubtle" in search_name:
+                rgb = lighten(rgb, 40) if effective_light_bg else darken(rgb, 40)
+            elif "BorderSubtle" in search_name:
+                rgb = lighten(rgb, 30) if effective_light_bg else darken(rgb, 30)
+            elif "Hover" in search_name or "Active" in search_name:
+                rgb = darken(rgb, 10) if effective_light_bg else lighten(rgb, 10)
+            elif "Striped" in search_name:
+                rgb = darken(rgb, 5) if effective_light_bg else lighten(rgb, 5)
+        
+        if is_alpha:
+            return f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, {alpha_val})"
+        if is_rgb:
+            return f"{rgb[0]}, {rgb[1]}, {rgb[2]}"
+        return rgb_to_hex(rgb)
+
     lines = []
     lines.append("/* GENERATED COLOR VARIABLES */")
     lines.append(f"/* Source: image */")
     lines.append("")
     lines.append(":root {")
     
-    # Theme colors - override base.css --color-* variables
-    lines.append("    /* === THEME COLORS === */")
-    for name, rgb in [("primary", primary), ("secondary", secondary), ("success", success), 
-                       ("info", info), ("warning", warning), ("danger", danger),
-                       ("light", light), ("dark", dark)]:
-        lines.append(f"    --color-{name}: {rgb_to_hex(rgb)};")
-    
-    lines.append("    --color-white: #ffffff;")
-    lines.append("    --color-black: #000000;")
-    
-    # Body
-    lines.append("")
-    lines.append("    /* === BODY === */")
-    lines.append(f"    --color-bg-body: {rgb_to_hex(body_bg)};")
-    lines.append(f"    --color-body: {rgb_to_hex(body_color)};")
-    lines.append(f"    --color-bg-light: {rgb_to_hex(light)};")
-    
-    # Muted/emphasis
-    lines.append("")
-    lines.append("    /* === EMPHASIS === */")
-    emphasis = (0, 0, 0) if get_luminance(body_bg) > 0.5 else (255, 255, 255)
-    lines.append(f"    --color-emphasis: {rgb_to_hex(emphasis)};")
-    lines.append(f"    --color-muted: {rgb_to_hex(darken(light, 30)) if get_luminance(body_bg) > 0.5 else rgb_to_hex(lighten(dark, 30))};")
-    
-    # Links
-    lines.append("")
-    lines.append("    /* === LINKS === */")
-    lines.append(f"    --color-link: {rgb_to_hex(primary)};")
-    link_hover = darken(primary, 10) if get_luminance(body_bg) > 0.5 else lighten(primary, 10)
-    lines.append(f"    --color-link-hover: {rgb_to_hex(link_hover)};")
-    
-    # Borders
-    lines.append("")
-    lines.append("    /* === BORDERS === */")
-    border = darken(light, 15) if get_luminance(body_bg) > 0.5 else lighten(dark, 15)
-    lines.append(f"    --color-border: {rgb_to_hex(border)};")
-    
-    # Buttons with WCAG-compliant colors
-    lines.append("")
-    lines.append("    /* === BUTTONS === */")
-    
-    for name, base in [("primary", primary), ("secondary", secondary), ("success", success),
-                        ("info", info), ("warning", warning), ("danger", danger),
-                        ("light", light), ("dark", dark)]:
-        btn_bg, btn_text = make_button_color(base)
-        btn_hover = darken(btn_bg, 8) if btn_text == (255, 255, 255) else lighten(btn_bg, 8)
-        btn_active = darken(btn_bg, 12) if btn_text == (255, 255, 255) else lighten(btn_bg, 12)
-        btn_border = darken(btn_bg, 15)
-        btn_focus = lighten(btn_bg, 30) if btn_text == (255, 255, 255) else darken(btn_bg, 30)
+    if ctbs_vars:
+        lines.append("    /* === GLASS EFFECTS === */")
+        lines.append("    --CTBS-GlassOpacity: 0.8;")
+        lines.append("    --CTBS-GlassBlur: 10px;")
+        lines.append("")
+        lines.append("    /* === CTBS SEMANTIC VARIABLES === */")
         
-        lines.append(f"")
-        lines.append(f"    /* {name.capitalize()} Button */")
-        lines.append(f"    --color-btn-{name}-color: {rgb_to_hex(btn_text)};")
-        lines.append(f"    --color-btn-{name}-bg: {rgb_to_hex(btn_bg)};")
-        lines.append(f"    --color-btn-{name}-border-color: {rgb_to_hex(btn_border)};")
-        lines.append(f"    --color-btn-{name}-hover-color: {rgb_to_hex(btn_text)};")
-        lines.append(f"    --color-btn-{name}-hover-bg: {rgb_to_hex(btn_hover)};")
-        lines.append(f"    --color-btn-{name}-hover-border-color: {rgb_to_hex(darken(btn_hover, 5))};")
-        lines.append(f"    --color-btn-{name}-active-color: {rgb_to_hex(btn_text)};")
-        lines.append(f"    --color-btn-{name}-active-bg: {rgb_to_hex(btn_active)};")
-        lines.append(f"    --color-btn-{name}-active-border-color: {rgb_to_hex(darken(btn_active, 5))};")
-        lines.append(f"    --color-btn-{name}-disabled-color: {rgb_to_hex(btn_text)};")
-        lines.append(f"    --color-btn-{name}-disabled-bg: {rgb_to_hex(btn_bg)};")
-        lines.append(f"    --color-btn-{name}-disabled-border-color: {rgb_to_hex(btn_border)};")
-    
-    # Form validation
-    lines.append("")
-    lines.append("    /* === FORM VALIDATION === */")
-    lines.append(f"    --color-form-valid: {rgb_to_hex(success)};")
-    lines.append(f"    --color-form-invalid: {rgb_to_hex(danger)};")
+        # Sort and deduplicate CTBS variables
+        unique_vars = sorted(list(set(ctbs_vars)))
+        
+        # We need a list of variables we already processed to avoid duplicates
+        processed_vars = set()
+        
+        for var in unique_vars:
+            if var in processed_vars:
+                continue
+            
+            val = get_ctbs_color(var)
+            lines.append(f"    {var}: {val};")
+            processed_vars.add(var)
+            
+            # Ensure every variable has an RGB variant for transparency support
+            if not var.endswith("Rgb"):
+                rgb_var = var + "Rgb"
+                if rgb_var not in processed_vars:
+                    rgb_val = get_ctbs_color(rgb_var)
+                    lines.append(f"    {rgb_var}: {rgb_val};")
+                    processed_vars.add(rgb_var)
+    else:
+        # Fallback to old behavior if no vars provided
+        lines.append("    /* === THEME COLORS === */")
+        for name, rgb in base_map.items():
+            if name in ["White", "Black", "Gray"]: continue
+            lines.append(f"    --color-{name.lower()}: {rgb_to_hex(rgb)};")
     
     lines.append("}")
-    
     return "\n".join(lines)
 
 
@@ -304,12 +397,15 @@ def main():
     parser.add_argument("--output", "-o", help="Output file (default: stdout)")
     parser.add_argument("--clusters", "-c", type=int, default=6,
                         help="Number of color clusters (default: 6)")
+    parser.add_argument("--vars-file", default="bs/ctbs-variables.css",
+                        help="Path to ctbs-variables.css to extract variables from")
     
     args = parser.parse_args()
     
     try:
+        ctbs_vars = parse_ctbs_variables(args.vars_file)
         colors = extract_colors(args.image, args.blur, args.clusters)
-        css = generate_css(colors)
+        css = generate_css(colors, ctbs_vars)
         
         if args.output:
             Path(args.output).write_text(css)
