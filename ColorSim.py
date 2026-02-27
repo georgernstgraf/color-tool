@@ -375,8 +375,12 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
                     rgb = use_map[color_base]
                     break
         
+        # Apply contrast and variation logic
         if "TextEmphasis" in search_name:
-            bg_subtle = lighten(rgb, 40) if effective_light_bg else darken(rgb, 40)
+            # For Alert Text Emphasis, check against the matching Alert Bg Subtle
+            alert_base = matched_base if matched_base in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger"] else "Primary"
+            base_rgb = use_map.get(alert_base, rgb)
+            bg_subtle = lighten(base_rgb, 40) if effective_light_bg else darken(base_rgb, 40)
             rgb = ensure_contrast_ratio(rgb, bg_subtle, 7.0)
         elif "BgSubtle" in search_name:
             rgb = lighten(rgb, 40) if effective_light_bg else darken(rgb, 40)
@@ -386,6 +390,11 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
             rgb = darken(rgb, 10) if effective_light_bg else lighten(rgb, 10)
         elif "Striped" in search_name:
             rgb = darken(rgb, 5) if effective_light_bg else lighten(rgb, 5)
+        elif matched_base in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger", "Link", "Emphasis", "Blue", "Indigo", "Purple", "Pink", "Red", "Orange", "Yellow", "Green", "Teal", "Cyan"]:
+            # These are foreground roles. Ensure they contrast against body background.
+            # Avoid enforcing contrast on variables that are explicitly Backgrounds
+            if "Bg" not in search_name and "Background" not in search_name:
+                rgb = ensure_contrast_ratio(rgb, current_body_bg, 7.0)
         elif "Color" in search_name and matched_base not in ["Body", "Emphasis"]:
             rgb = ensure_contrast_ratio(rgb, current_body_bg, 7.0)
         
