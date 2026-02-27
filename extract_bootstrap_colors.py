@@ -142,6 +142,35 @@ class BootstrapExtractor:
 
     def get_var_name(self, color_val, selector=None, prop=None):
         color_val = self.normalize_color(color_val)
+        
+        # Contextual name has high priority for components to ensure unique themed variables
+        ctx_name = self.get_contextual_name(selector, prop)
+        if ctx_name:
+            var_name = f"--CTBS-{ctx_name}"
+            # Only use this if it's not already mapped to a different color in the SAME context
+            # Actually, let's allow multiple variables to point to the same color if they have different names
+            # This allows ColorSim to apply different contrast rules.
+            key = (color_val, var_name)
+            if key in self.color_map:
+                return self.color_map[key]
+            
+            # Ensure uniqueness of the variable name itself
+            original_var_name = var_name
+            counter = 1
+            while any(v == var_name for v in self.color_map.values()):
+                # If the same name exists, check if it has the same value
+                found_val = next((k[0] for k, v in self.color_map.items() if v == var_name), None)
+                if found_val == color_val:
+                    # Same name, same value -> reuse
+                    self.color_map[key] = var_name
+                    return var_name
+                var_name = f"{original_var_name}-{counter}"
+                counter += 1
+            
+            self.color_map[key] = var_name
+            self._define_var(var_name, color_val)
+            return var_name
+
         if color_val not in self.color_map:
             var_name = None
             
@@ -161,12 +190,6 @@ class BootstrapExtractor:
                     if nice_alpha == '0': nice_alpha = '0'
                     var_name = f"--CTBS-BlackAlpha{nice_alpha}"
             
-            # Contextual name has high priority if found
-            if not var_name:
-                ctx_name = self.get_contextual_name(selector, prop)
-                if ctx_name:
-                    var_name = f"--CTBS-{ctx_name}"
-            
             # Fallback to root-based semantic name
             if not var_name and color_val in self.value_to_bs_name:
                 semantic_base = self.get_semantic_name(self.value_to_bs_name[color_val])
@@ -184,26 +207,29 @@ class BootstrapExtractor:
                 counter += 1
                 
             self.color_map[color_val] = var_name
-            self.var_definitions.append(f"  {var_name}: {color_val};")
+            self._define_var(var_name, color_val)
             
-            # Also define the RGB variant for translucency support if it's not already an RGB/naked value
-            if not var_name.endswith("Rgb"):
-                rgb_var = f"{var_name}Rgb"
-                if 'rgb' in color_val:
-                    # Extract r, g, b from rgb(...) or rgba(...)
-                    match = re.search(r'rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)', color_val)
-                    if match:
-                        rgb_val = f"{match.group(1)}, {match.group(2)}, {match.group(3)}"
-                        self.var_definitions.append(f"  {rgb_var}: {rgb_val};")
-                elif color_val.startswith('#'):
-                    # Hex to naked RGB
-                    h = color_val.lstrip('#')
-                    r, g, b = tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
-                    self.var_definitions.append(f"  {rgb_var}: {r}, {g}, {b};")
-                elif re.match(self.naked_rgb_regex, color_val):
-                    self.var_definitions.append(f"  {rgb_var}: {color_val};")
-
         return self.color_map[color_val]
+
+    def _define_var(self, var_name, color_val):
+        self.var_definitions.append(f"  {var_name}: {color_val};")
+        
+        # Also define the RGB variant for translucency support if it's not already an RGB/naked value
+        if not var_name.endswith("Rgb"):
+            rgb_var = f"{var_name}Rgb"
+            if 'rgb' in color_val:
+                # Extract r, g, b from rgb(...) or rgba(...)
+                match = re.search(r'rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)', color_val)
+                if match:
+                    rgb_val = f"{match.group(1)}, {match.group(2)}, {match.group(3)}"
+                    self.var_definitions.append(f"  {rgb_var}: {rgb_val};")
+            elif color_val.startswith('#'):
+                # Hex to naked RGB
+                h = color_val.lstrip('#')
+                r, g, b = tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+                self.var_definitions.append(f"  {rgb_var}: {r}, {g}, {b};")
+            elif re.match(self.naked_rgb_regex, color_val):
+                self.var_definitions.append(f"  {rgb_var}: {color_val};")
 
     def process_value(self, val, selector=None, prop=None):
         if 'var(' in val:
@@ -279,6 +305,9 @@ class BootstrapExtractor:
                         var_lines.append(f"  {prop}: {new_val};")
                     
         if var_lines:
+            # Inject high-contrast overrides that Bootstrap might set to 'inherit' or static values
+            var_lines.append("  --bs-heading-color: var(--CTBS-EmphasisColor);")
+            var_lines.append("  --bs-emphasis-color: var(--CTBS-EmphasisColor);")
             return ":root {\n" + "\n".join(var_lines) + "\n}"
         return ""
 
@@ -314,6 +343,15 @@ class BootstrapExtractor:
                     properties = re.split(r';(?![^\(]*\))', block_content)
                     
                     color_lines = []
+                    
+                    # Inject dynamic overrides for specific selectors
+                    if selector == "[data-bs-theme=dark]":
+                        color_lines.append(f"{indent}  --bs-heading-color: var(--CTBS-DarkThemeEmphasisColor);")
+                        color_lines.append(f"{indent}  --bs-emphasis-color: var(--CTBS-DarkThemeEmphasisColor);")
+                    elif selector == ":root" or selector == ":root, [data-bs-theme=light]":
+                         # We already handle :root in extract_base_variables, but let's be safe if it appears elsewhere
+                         pass
+
                     for prop_line in properties:
                         prop_line = prop_line.strip()
                         if not prop_line: continue
@@ -359,7 +397,11 @@ class BootstrapExtractor:
                                             'alert-bg': 'AlertBg',
                                             'navbar-bg': 'NavbarBg'
                                         }
-                                        ctbs_base = ctbs_map.get(bs_var, 'BodyBg')
+                                        ctbs_base = ctbs_map.get(bs_var)
+                                        if not ctbs_base:
+                                            # Dynamic mapping for other variables like primary-bg-subtle -> PrimaryBgSubtle
+                                            ctbs_base = "".join([p.capitalize() for p in bs_var.split('-')])
+                                            
                                         new_val = f"rgba(var(--CTBS-{ctbs_base}Rgb), var(--CTBS-GlassOpacity))"
                                         color_lines.append(f"{indent}  {prop}: {new_val};")
                                         color_lines.append(f"{indent}  backdrop-filter: blur(var(--CTBS-GlassBlur));")

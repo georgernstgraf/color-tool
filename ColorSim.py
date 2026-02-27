@@ -124,29 +124,52 @@ def ensure_contrast(bg: tuple[int, int, int], target_ratio: float = 7.0) -> tupl
 
 def ensure_contrast_ratio(text_rgb: tuple[int, int, int], bg_rgb: tuple[int, int, int], target: float = 7.0) -> tuple[int, int, int]:
     """Adjust text_rgb lightness until it meets target contrast ratio against bg_rgb."""
-    target_with_buffer = target + 0.1
+    target_with_buffer = target + 0.1 # Increased buffer
     
-    ratio = contrast_ratio(text_rgb, bg_rgb)
-    if ratio >= target_with_buffer:
+    current_ratio = contrast_ratio(text_rgb, bg_rgb)
+    if current_ratio >= target_with_buffer:
         return text_rgb
     
     h, s, l = rgb_to_hsl(text_rgb)
     bg_lum = get_luminance(bg_rgb)
     
+    # Try all lightness values to find the best fit
+    best_rgb = text_rgb
+    max_contrast = current_ratio
+    
+    # Prefer direction based on background luminance
     if bg_lum > 0.5:
-        # Light background, darken text
-        for new_l in range(int(l), -1, -1):
-            new_rgb = hsl_to_rgb((h, s, new_l))
-            if contrast_ratio(new_rgb, bg_rgb) >= target_with_buffer:
-                return new_rgb
-        return (0, 0, 0) # Fallback to black
+        # Light background: Prefer darkening first
+        search_range = list(range(int(l), -1, -1)) + list(range(int(l), 101))
     else:
-        # Dark background, lighten text
-        for new_l in range(int(l), 101, 1):
-            new_rgb = hsl_to_rgb((h, s, new_l))
-            if contrast_ratio(new_rgb, bg_rgb) >= target_with_buffer:
-                return new_rgb
-        return (255, 255, 255) # Fallback to white
+        # Dark background: Prefer lightening first
+        search_range = list(range(int(l), 101)) + list(range(int(l), -1, -1))
+        
+    for new_l in search_range:
+        c = hsl_to_rgb((h, s, new_l))
+        ratio = contrast_ratio(c, bg_rgb)
+        if ratio >= target_with_buffer:
+            return c
+        if ratio > max_contrast:
+            max_contrast = ratio
+            best_rgb = c
+            
+    # If we couldn't reach target with original hue/sat, try black/white
+    white = (255, 255, 255)
+    black = (0, 0, 0)
+    w_ratio = contrast_ratio(white, bg_rgb)
+    b_ratio = contrast_ratio(black, bg_rgb)
+    
+    if w_ratio >= target_with_buffer and w_ratio >= b_ratio: return white
+    if b_ratio >= target_with_buffer: return black
+    
+    # Still nothing? Return the absolute best found
+    result = best_rgb
+    if w_ratio > max_contrast: result = white
+    if b_ratio > max_contrast: result = black
+    
+    sys.stderr.write(f"Contrast adjustment: {rgb_to_hex(text_rgb)} on {rgb_to_hex(bg_rgb)} -> {rgb_to_hex(result)} (ratio {contrast_ratio(result, bg_rgb):.2f})\n")
+    return result
 
 
 def extract_colors(image_path: str, blur: bool, count: int = 12) -> list:
@@ -243,6 +266,17 @@ def get_role_map(colors: list) -> dict:
     light = sorted_by_lum[-1] if sorted_by_lum else (248, 249, 250)
     dark = sorted_by_lum[0] if sorted_by_lum else (33, 37, 41)
     
+    # Ensure usable backgrounds for WCAG AAA
+    # Light must be at least 0.85 luminance to allow dark text
+    if get_luminance(light) < 0.85:
+        h, s, l = rgb_to_hsl(light)
+        light = hsl_to_rgb((h, s, 95))
+    
+    # Dark must be at most 0.10 luminance to allow light text
+    if get_luminance(dark) > 0.10:
+        h, s, l = rgb_to_hsl(dark)
+        dark = hsl_to_rgb((h, s, 5))
+    
     return {
         "Primary": primary,
         "Secondary": secondary,
@@ -283,6 +317,10 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
     white = (255, 255, 255)
     black = (0, 0, 0)
     
+    # Harmonize roles against body background for AAA
+    for role in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger", "Gray", "Blue", "Indigo", "Purple", "Pink", "Red", "Orange", "Yellow", "Green", "Teal", "Cyan"]:
+        light_map[role] = ensure_contrast_ratio(light_map[role], body_bg, 7.0)
+
     full_light_map = light_map.copy()
     full_light_map.update({
         "White": white,
@@ -296,7 +334,12 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
 
     if dark_map:
         dark_body_bg = dark_map["Dark"]
+        # Harmonize dark roles
+        for role in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger", "Gray", "Blue", "Indigo", "Purple", "Pink", "Red", "Orange", "Yellow", "Green", "Teal", "Cyan"]:
+            dark_map[role] = ensure_contrast_ratio(dark_map[role], dark_body_bg, 7.0)
+            
         full_dark_map = dark_map.copy()
+
         full_dark_map.update({
             "White": white,
             "Black": black,
@@ -346,30 +389,45 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
                 alpha_val = f"0.{match.group(1)}"
                 if alpha_val == "0.0": alpha_val = "0"
         
+        is_bg = "Bg" in search_name or "Background" in search_name
+        is_color = "Color" in search_name or "Text" in search_name
+        
         if not matched_base:
             if "White" in search_name: rgb = white
             elif "Black" in search_name: rgb = black
-            elif "Bg" in search_name or "Background" in search_name: rgb = current_body_bg
+            elif is_bg: rgb = current_body_bg
             elif "Color" in search_name: rgb = current_body_color
             else: rgb = (128, 128, 128)
         else:
             if matched_base == "Body":
-                rgb = current_body_bg if "Bg" in search_name else current_body_color
+                rgb = current_body_bg if is_bg else current_body_color
             elif matched_base == "Emphasis":
-                rgb = white if is_dark_theme_var else use_map["EmphasisColor"]
+                rgb = use_map["EmphasisColor"]
             elif matched_base == "Link":
                 rgb = use_map["Primary"]
             elif matched_base == "Border":
                 rgb = use_map["BorderColor"]
             elif matched_base in ["Table", "Alert", "Badge", "Navbar", "Nav", "ListGroupItem", "Dropdown", "Card", "Modal", "Toast", "Offcanvas"]:
-                # Use body bg for these in glass mode if it's a "Bg" variable
-                if "Bg" in search_name or "Background" in search_name:
+                # If it's a specific component without a color role (e.g. TableBg)
+                if is_bg:
                     rgb = current_body_bg
                 else:
                     rgb = use_map["Secondary"]
+            elif matched_base == "Gray":
+                rgb = use_map.get("Gray", (108, 117, 125))
+                # Handle Gray100-900
+                match = re.search(r'Gray(\d+)', search_name)
+                if match:
+                    weight = int(match.group(1))
+                    diff = (weight - 500) // 10
+                    if diff > 0:
+                        rgb = darken(rgb, diff)
+                    elif diff < 0:
+                        rgb = lighten(rgb, -diff)
             else:
                 rgb = use_map.get(matched_base, (128, 128, 128))
             
+            # Refine role if multiple bases present (e.g. SuccessTableBg)
             for color_base in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger", "Light", "Dark"]:
                 if color_base in search_name and color_base != matched_base:
                     rgb = use_map[color_base]
@@ -377,25 +435,61 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
         
         # Apply contrast and variation logic
         if "TextEmphasis" in search_name:
-            # For Alert Text Emphasis, check against the matching Alert Bg Subtle
-            alert_base = matched_base if matched_base in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger"] else "Primary"
-            base_rgb = use_map.get(alert_base, rgb)
+            # For Alert Text Emphasis, check against matching BgSubtle
+            base_rgb = rgb
             bg_subtle = lighten(base_rgb, 40) if effective_light_bg else darken(base_rgb, 40)
             rgb = ensure_contrast_ratio(rgb, bg_subtle, 7.0)
-        elif "BgSubtle" in search_name:
+            rgb = ensure_contrast_ratio(rgb, current_body_bg, 7.0)
+        elif "BgSubtle" in search_name or (is_bg and matched_base in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger"] and any(c in search_name for c in ["Table", "Alert", "Badge"])):
+            # Subtle backgrounds for components
             rgb = lighten(rgb, 40) if effective_light_bg else darken(rgb, 40)
+            # Ensure it's very light or very dark for 7.0 contrast
+            l = get_luminance(rgb)
+            if effective_light_bg and l < 0.85:
+                rgb = lighten(rgb, 10)
+            elif not effective_light_bg and l > 0.15:
+                rgb = darken(rgb, 10)
         elif "BorderSubtle" in search_name:
             rgb = lighten(rgb, 30) if effective_light_bg else darken(rgb, 30)
         elif "Hover" in search_name or "Active" in search_name:
-            rgb = darken(rgb, 10) if effective_light_bg else lighten(rgb, 10)
+            if is_bg:
+                # If it's a background, adjust relative to base bg
+                rgb = darken(rgb, 15) if effective_light_bg else lighten(rgb, 15)
+            else:
+                # If it's a text color, ensure it still contrasts
+                rgb = darken(rgb, 10) if effective_light_bg else lighten(rgb, 10)
+                rgb = ensure_contrast_ratio(rgb, current_body_bg, 7.0)
         elif "Striped" in search_name:
             rgb = darken(rgb, 5) if effective_light_bg else lighten(rgb, 5)
         elif matched_base in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger", "Link", "Emphasis", "Blue", "Indigo", "Purple", "Pink", "Red", "Orange", "Yellow", "Green", "Teal", "Cyan"]:
-            # These are foreground roles. Ensure they contrast against body background.
-            # Avoid enforcing contrast on variables that are explicitly Backgrounds
-            if "Bg" not in search_name and "Background" not in search_name:
+            # Foreground roles or Button backgrounds
+            if is_bg and "Btn" in search_name:
+                # Button background: Must contrast with BodyBg
+                rgb = ensure_contrast_ratio(rgb, current_body_bg, 3.0)
+                # Dead-zone avoidance: ensure it supports 7.0 contrast with white OR black
+                l = get_luminance(rgb)
+                if 0.10 <= l <= 0.30:
+                    if l > 0.20: rgb = lighten(rgb, 15)
+                    else: rgb = darken(rgb, 15)
+            elif is_color:
+                # Text: Must contrast with BodyBg (default)
                 rgb = ensure_contrast_ratio(rgb, current_body_bg, 7.0)
-        elif "Color" in search_name and matched_base not in ["Body", "Emphasis"]:
+                
+                # Special case: Button Text MUST contrast with Button Background
+                if "Btn" in search_name:
+                    # Determine button background color
+                    btn_bg = use_map.get(matched_base, rgb)
+                    btn_bg = ensure_contrast_ratio(btn_bg, current_body_bg, 3.0)
+                    l_bg = get_luminance(btn_bg)
+                    if 0.10 <= l_bg <= 0.30:
+                        if l_bg > 0.20: btn_bg = lighten(btn_bg, 15)
+                        else: btn_bg = darken(btn_bg, 15)
+                    
+                    rgb = ensure_contrast_ratio(rgb, btn_bg, 7.0)
+            else:
+                # Other foreground roles (links, etc.)
+                rgb = ensure_contrast_ratio(rgb, current_body_bg, 7.0)
+        elif is_color and matched_base not in ["Body", "Emphasis"]:
             rgb = ensure_contrast_ratio(rgb, current_body_bg, 7.0)
         
         if is_alpha: return f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, {alpha_val})"
