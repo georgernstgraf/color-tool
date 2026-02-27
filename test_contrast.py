@@ -29,12 +29,22 @@ def test_contrast():
         "--CTBS-WarningTextEmphasis",
         "--CTBS-BodyColor",
         "--CTBS-BodyBg",
-        "--CTBS-EmphasisColor"
+        "--CTBS-EmphasisColor",
+        # Dark Theme variables
+        "--CTBS-DarkThemePrimaryBgSubtle",
+        "--CTBS-DarkThemePrimaryTextEmphasis",
+        "--CTBS-DarkThemeSuccessBgSubtle",
+        "--CTBS-DarkThemeSuccessTextEmphasis",
+        "--CTBS-DarkThemeDangerBgSubtle",
+        "--CTBS-DarkThemeDangerTextEmphasis",
+        "--CTBS-DarkThemeWarningBgSubtle",
+        "--CTBS-DarkThemeWarningTextEmphasis",
+        "--CTBS-DarkThemeBodyColor",
+        "--CTBS-DarkThemeBodyBg"
     ]
     
     css = ColorSim.generate_css(palette, ctbs_vars)
     print("--- GENERATED CSS (Subset) ---")
-    print(css)
     
     # Simple parser for the output to check contrast
     lines = css.split('\n')
@@ -47,27 +57,31 @@ def test_contrast():
             if val.startswith('#'):
                 colors[name] = ColorSim.hex_to_rgb(val)
     
-    body_bg = colors.get('--CTBS-BodyBg', (255, 255, 255))
-    print(f"\nChecking contrast against BodyBg {body_bg}:")
-    
-    checks = [
-        ("--CTBS-BodyColor", "--CTBS-BodyBg"),
-        ("--CTBS-EmphasisColor", "--CTBS-BodyBg"),
-        ("--CTBS-PrimaryTextEmphasis", "--CTBS-PrimaryBgSubtle"),
-        ("--CTBS-SuccessTextEmphasis", "--CTBS-SuccessBgSubtle"),
-        ("--CTBS-DangerTextEmphasis", "--CTBS-DangerBgSubtle"),
-        ("--CTBS-WarningTextEmphasis", "--CTBS-WarningBgSubtle"),
-        # Also check emphasis against BodyBg just in case
-        ("--CTBS-PrimaryTextEmphasis", "--CTBS-BodyBg"),
-    ]
-    
-    for text_name, bg_name in checks:
-        if text_name in colors and bg_name in colors:
-            text_rgb = colors[text_name]
-            bg_rgb = colors[bg_name]
+    def check_pair(text_var, bg_var, label):
+        if text_var in colors and bg_var in colors:
+            text_rgb = colors[text_var]
+            bg_rgb = colors[bg_var]
             ratio = ColorSim.contrast_ratio(text_rgb, bg_rgb)
             status = "PASS (AAA)" if ratio >= 7.0 else "FAIL (AAA)"
-            print(f"{text_name} on {bg_name}: {ratio:.2f} - {status}")
+            print(f"[{label}] {text_var} on {bg_var}: {ratio:.2f} - {status}")
+            return ratio >= 7.0
+        return True
+
+    print("\n--- LIGHT THEME CONTRAST ---")
+    check_pair("--CTBS-BodyColor", "--CTBS-BodyBg", "Light")
+    check_pair("--CTBS-EmphasisColor", "--CTBS-BodyBg", "Light")
+    check_pair("--CTBS-PrimaryTextEmphasis", "--CTBS-PrimaryBgSubtle", "Light")
+    check_pair("--CTBS-SuccessTextEmphasis", "--CTBS-SuccessBgSubtle", "Light")
+    check_pair("--CTBS-DangerTextEmphasis", "--CTBS-DangerBgSubtle", "Light")
+    check_pair("--CTBS-WarningTextEmphasis", "--CTBS-WarningBgSubtle", "Light")
+
+    print("\n--- DARK THEME CONTRAST ---")
+    # In DarkTheme context, BodyBg is usually the dark color
+    check_pair("--CTBS-DarkThemeBodyColor", "--CTBS-DarkThemeBodyBg", "Dark")
+    check_pair("--CTBS-DarkThemePrimaryTextEmphasis", "--CTBS-DarkThemePrimaryBgSubtle", "Dark")
+    check_pair("--CTBS-DarkThemeSuccessTextEmphasis", "--CTBS-DarkThemeSuccessBgSubtle", "Dark")
+    check_pair("--CTBS-DarkThemeDangerTextEmphasis", "--CTBS-DarkThemeDangerBgSubtle", "Dark")
+    check_pair("--CTBS-DarkThemeWarningTextEmphasis", "--CTBS-DarkThemeWarningBgSubtle", "Dark")
 
 if __name__ == "__main__":
     test_contrast()
