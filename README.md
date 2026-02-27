@@ -42,6 +42,22 @@ Analyzes an image to extract a dominant color palette and maps it to the semanti
     -   `-c`, `--clusters`: Number of color clusters to sample (default: 12).
     -   `--vars-file`: Path to the `ctbs-variables.css` file to extract variable names from.
 
+## Preview & Examples
+
+The repository includes several pre-configured interactive preview files that demonstrate the system with different background images:
+
+- **`lego.html`**: A vibrant theme generated from Lego backgrounds. Demonstrates high-contrast primary colors and glassmorphism.
+- **`krokus.html`**: A softer, nature-inspired theme generated from a floral image. Demonstrates how the system handles subtle hues and muted palettes.
+
+To see them in action, simply open the `.html` files in any modern web browser.
+
+### Adjusting UI Opacity
+You can adjust the transparency of all UI components (Cards, Alerts, etc.) across all themes simultaneously by editing **`bs/ui-config.css`**:
+
+```css
+--CTBS-GlassOpacity: 0.8 !important; /* Set to 0 for full transparency */
+```
+
 ## Setup
 
 1.  Create a virtual environment: `python3 -m venv venv`
