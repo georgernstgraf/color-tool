@@ -122,38 +122,8 @@ def ensure_contrast(bg: tuple[int, int, int], target_ratio: float = 7.0) -> tupl
         return white
 
 
-def make_button_color(base: tuple[int, int, int], target_ratio: float = 7.0) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
-    """Adjust base color to have good contrast with either black or white text.
-    Returns (adjusted_bg, text_color)."""
-    h, s, l = rgb_to_hsl(base)
-    
-    # Check if we can use white text (need dark bg)
-    white = (255, 255, 255)
-    black = (0, 0, 0)
-    
-    # Try darkening for white text
-    test_l = l
-    while test_l > 5:
-        test_bg = hsl_to_rgb((h, s, test_l))
-        if contrast_ratio(test_bg, white) >= target_ratio:
-            return (test_bg, white)
-        test_l -= 2
-    
-    # Try lightening for black text
-    test_l = l
-    while test_l < 95:
-        test_bg = hsl_to_rgb((h, s, test_l))
-        if contrast_ratio(test_bg, black) >= target_ratio:
-            return (test_bg, black)
-        test_l += 2
-    
-    # Fallback: use the darker version with white text
-    return (hsl_to_rgb((h, s, 20)), white)
-
-
 def ensure_contrast_ratio(text_rgb: tuple[int, int, int], bg_rgb: tuple[int, int, int], target: float = 7.0) -> tuple[int, int, int]:
     """Adjust text_rgb lightness until it meets target contrast ratio against bg_rgb."""
-    # Use a small buffer to handle rounding and ensure we stay above target
     target_with_buffer = target + 0.1
     
     ratio = contrast_ratio(text_rgb, bg_rgb)
@@ -179,12 +149,12 @@ def ensure_contrast_ratio(text_rgb: tuple[int, int, int], bg_rgb: tuple[int, int
         return (255, 255, 255) # Fallback to white
 
 
-def extract_colors(image_path: str, blur: bool, count: int = 6) -> list:
+def extract_colors(image_path: str, blur: bool, count: int = 12) -> list:
     path = Path(image_path)
     if not path.exists():
         raise FileNotFoundError(f"Image not found: {image_path}")
     
-    work_path = image_path
+    work_path = str(path)
     if blur:
         img = Image.open(image_path)
         img = img.filter(ImageFilter.GaussianBlur(radius=8))
@@ -194,89 +164,86 @@ def extract_colors(image_path: str, blur: bool, count: int = 6) -> list:
     color_thief = ColorThief(work_path)
     palette = color_thief.get_palette(color_count=count, quality=10)
     
-    if blur:
+    if blur and work_path != str(path):
         Path(work_path).unlink(missing_ok=True)
     
     return palette
 
 
-def parse_ctbs_variables(overrides_path: str) -> list[str]:
-    """Extract all --CTBS- variables from the overrides file."""
-    path = Path(overrides_path)
-    if not path.exists():
-        return []
+def score_color(rgb, target_h=None):
+    h, s, l = rgb_to_hsl(rgb)
+    # Primary score: high saturation, medium lightness
+    sat_score = s * 1.5
+    lum_score = 100 - abs(50 - l) * 2.5
     
-    content = path.read_text()
-    # Find all --CTBS-... variables
-    variables = sorted(list(set(re.findall(r'--CTBS-[a-zA-Z0-9-]*', content))))
-    return variables
-
-
-def generate_css(colors: list, ctbs_vars: list[str] | None = None) -> str:
-    """Generate CSS variables from extracted colors."""
+    hue_score = 0
+    if target_h is not None:
+        diff = abs(h - target_h)
+        hue_score = 100 - min(diff, 360 - diff)
     
-    def score_color(rgb, target_h=None):
-        h, s, l = rgb_to_hsl(rgb)
-        # Primary score: high saturation, medium lightness
-        sat_score = s
-        lum_score = 100 - abs(50 - l) * 2
-        hue_score = 0
-        if target_h is not None:
-            # Distance in hue (circular)
-            diff = abs(h - target_h)
-            hue_score = 100 - min(diff, 360 - diff)
-        return sat_score + lum_score + hue_score
+    penalty = 0
+    if l < 20 or l > 85:
+        penalty = 50
+    if s < 10:
+        penalty += 30
+        
+    return sat_score + lum_score + hue_score - penalty
 
-    # Sort colors by score to find the best Primary
+
+def get_role_map(colors: list) -> dict:
+    """Map clusters to semantic roles with improved harmonization."""
     sorted_by_score = sorted(colors, key=score_color, reverse=True)
+    primary = sorted_by_score[0] if sorted_by_score else (13, 110, 253)
+    p_h, p_s, p_l = rgb_to_hsl(primary)
     
-    # Assign semantic colors
-    primary = sorted_by_score[0] if sorted_by_score else colors[0]
-    
-    # Secondary is either the most different hue from primary, or just second best score
-    def hue_diff(c1, c2):
-        h1, _, _ = rgb_to_hsl(c1)
-        h2, _, _ = rgb_to_hsl(c2)
+    def hue_diff(h1, h2):
         diff = abs(h1 - h2)
         return min(diff, 360 - diff)
 
-    secondary_candidates = sorted(colors, key=lambda c: hue_diff(c, primary), reverse=True)
+    secondary_candidates = sorted(colors, key=lambda c: hue_diff(rgb_to_hsl(c)[0], p_h), reverse=True)
     secondary = secondary_candidates[0] if len(secondary_candidates) > 1 else primary
     
-    # Find by hue category
-    success = find_color_by_category(colors, "green")
-    if not success:
-        h, s, l = rgb_to_hsl(primary)
-        success = hsl_to_rgb((120, min(s + 20, 80), l))
+    def find_best_role(target_hue, category, fallback_h):
+        candidates = [c for c in colors if categorize_by_hue(c) == category]
+        if candidates:
+            # Pick most saturated candidate
+            candidates.sort(key=lambda c: rgb_to_hsl(c)[1], reverse=True)
+            best_rgb = candidates[0]
+            h, s, l = rgb_to_hsl(best_rgb)
+            
+            # Anchor Logic: Harmonize the extracted color
+            # 1. Shift hue 30% towards canonical target
+            diff = target_hue - h
+            if diff > 180: diff -= 360
+            if diff < -180: diff += 360
+            refined_h = (h + diff * 0.3) % 360
+            
+            # 2. Ensure status-appropriate vibrancy (vibrant but not neon)
+            refined_s = max(40, min(s, 90))
+            refined_l = max(35, min(l, 60))
+            
+            return hsl_to_rgb((refined_h, refined_s, refined_l))
+        
+        # Fallback if category not in image: Use brand saturation, but role hue
+        return hsl_to_rgb((fallback_h, min(p_s + 20, 85), 45))
+
+    success = find_best_role(120, "green", 120)
+    warning = find_best_role(45, "yellow", 45)
+    danger = find_best_role(0, "red", 0)
+    info = find_best_role(195, "cyan", 195)
     
-    warning = find_color_by_category(colors, "yellow") or find_color_by_category(colors, "orange")
-    if not warning:
-        h, s, l = rgb_to_hsl(primary)
-        warning = hsl_to_rgb((45, min(s + 20, 80), l))
+    # Extra roles for literal color mapping
+    indigo = find_best_role(264, "blue", 264)
+    purple = find_best_role(282, "purple", 282)
+    pink = find_best_role(330, "pink", 330)
+    orange = find_best_role(30, "orange", 30)
+    teal = find_best_role(160, "green", 160)
     
-    danger = find_color_by_category(colors, "red")
-    if not danger:
-        h, s, l = rgb_to_hsl(primary)
-        danger = hsl_to_rgb((0, min(s + 20, 80), l))
-    
-    info = find_color_by_category(colors, "cyan") or find_color_by_category(colors, "blue")
-    if not info:
-        h, s, l = rgb_to_hsl(primary)
-        info = hsl_to_rgb((195, min(s + 20, 80), l))
-    
-    # Light and dark from luminance
     sorted_by_lum = sorted(colors, key=get_luminance)
     light = sorted_by_lum[-1] if sorted_by_lum else (248, 249, 250)
     dark = sorted_by_lum[0] if sorted_by_lum else (33, 37, 41)
     
-    # Body colors - ensure contrast
-    body_bg = light
-    body_color = ensure_contrast(body_bg)
-    
-    white = (255, 255, 255)
-    black = (0, 0, 0)
-    
-    base_map = {
+    return {
         "Primary": primary,
         "Secondary": secondary,
         "Success": success,
@@ -285,89 +252,130 @@ def generate_css(colors: list, ctbs_vars: list[str] | None = None) -> str:
         "Danger": danger,
         "Light": light,
         "Dark": dark,
+        "Gray": (108, 117, 125),
+        "Blue": primary,
+        "Green": success,
+        "Red": danger,
+        "Yellow": warning,
+        "Cyan": info,
+        "Indigo": indigo,
+        "Purple": purple,
+        "Pink": pink,
+        "Orange": orange,
+        "Teal": teal,
+    }
+
+
+def parse_ctbs_variables(overrides_path: str) -> list[str]:
+    path = Path(overrides_path)
+    if not path.exists():
+        return []
+    content = path.read_text()
+    return sorted(list(set(re.findall(r'--CTBS-[a-zA-Z0-9-]*', content))))
+
+
+def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars: list[str] | None = None) -> str:
+    light_map = get_role_map(light_colors)
+    dark_map = get_role_map(dark_colors) if dark_colors else None
+
+    body_bg = light_map["Light"]
+    body_color = ensure_contrast(body_bg)
+    white = (255, 255, 255)
+    black = (0, 0, 0)
+    
+    full_light_map = light_map.copy()
+    full_light_map.update({
         "White": white,
         "Black": black,
         "BodyBg": body_bg,
         "BodyColor": body_color,
         "EmphasisColor": ensure_contrast(body_bg, 7.0),
-        "LinkColor": primary,
-        "BorderColor": darken(light, 15) if get_luminance(body_bg) > 0.5 else lighten(dark, 15),
-        "Gray": (108, 117, 125),
-    }
+        "LinkColor": light_map["Primary"],
+        "BorderColor": darken(light_map["Light"], 15) if get_luminance(body_bg) > 0.5 else lighten(light_map["Dark"], 15),
+    })
+
+    if dark_map:
+        dark_body_bg = dark_map["Dark"]
+        full_dark_map = dark_map.copy()
+        full_dark_map.update({
+            "White": white,
+            "Black": black,
+            "BodyBg": dark_body_bg,
+            "BodyColor": ensure_contrast(dark_body_bg),
+            "EmphasisColor": ensure_contrast(dark_body_bg, 7.0),
+            "LinkColor": dark_map["Primary"],
+            "BorderColor": lighten(dark_map["Dark"], 15),
+        })
+    else:
+        full_dark_map = None
 
     def get_ctbs_color(var_name: str) -> str:
         name = var_name.replace("--CTBS-", "")
-        
-        # Handle RGB variant
         is_rgb = name.endswith("Rgb")
         base_name = name[:-3] if is_rgb else name
-        
-        # Check for dark mode context
-        is_dark_theme = "DarkTheme" in base_name
+        is_dark_theme_var = "DarkTheme" in base_name
         search_name = base_name.replace("DarkTheme", "")
         
-        # Determine effective theme and backgrounds
-        is_light_bg = get_luminance(body_bg) > 0.5
-        effective_light_bg = is_light_bg and not is_dark_theme
-        
-        current_body_bg = base_map["Dark"] if is_dark_theme else base_map["BodyBg"]
-        current_body_color = base_map["Light"] if is_dark_theme else base_map["BodyColor"]
+        use_map = full_light_map
+        if is_dark_theme_var and full_dark_map:
+            use_map = full_dark_map
 
-        # Find the base category
+        is_light_bg = get_luminance(body_bg) > 0.5
+        effective_light_bg = is_light_bg and not is_dark_theme_var
+        if full_dark_map and is_dark_theme_var:
+            effective_light_bg = False
+            
+        current_body_bg = use_map["BodyBg"]
+        current_body_color = use_map["BodyColor"]
+        
+        if is_dark_theme_var and not full_dark_map:
+            current_body_bg = full_light_map["Dark"]
+            current_body_color = full_light_map["Light"]
+
         matched_base = None
-        for base in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger", "Light", "Dark", "Gray", "Body", "Border", "Emphasis", "Link", "Form", "Btn", "Table", "Alert", "Badge", "Navbar", "Nav", "ListGroupItem", "Dropdown"]:
+        for base in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger", "Light", "Dark", "Gray", "Body", "Border", "Emphasis", "Link", "Form", "Btn", "Table", "Alert", "Badge", "Navbar", "Nav", "ListGroupItem", "Dropdown", "Card", "Modal", "Toast", "Offcanvas", "Blue", "Indigo", "Purple", "Pink", "Red", "Orange", "Yellow", "Green", "Teal", "Cyan"]:
             if base in search_name:
                 matched_base = base
                 break
         
-        # Handle Alpha variables
         is_alpha = "Alpha" in search_name
         alpha_val = "1"
         if is_alpha:
             match = re.search(r'Alpha(\d+)', search_name)
             if match:
-                alpha_val = match.group(1)
-                alpha_val = f"0.{alpha_val}"
+                alpha_val = f"0.{match.group(1)}"
                 if alpha_val == "0.0": alpha_val = "0"
         
-        # 1. Determine base RGB
         if not matched_base:
-            if "White" in search_name:
-                rgb = (255, 255, 255)
-            elif "Black" in search_name:
-                rgb = (0, 0, 0)
-            elif "Bg" in search_name or "Background" in search_name:
-                rgb = current_body_bg
-            elif "Color" in search_name:
-                rgb = current_body_color
-            else:
-                rgb = (128, 128, 128)
+            if "White" in search_name: rgb = white
+            elif "Black" in search_name: rgb = black
+            elif "Bg" in search_name or "Background" in search_name: rgb = current_body_bg
+            elif "Color" in search_name: rgb = current_body_color
+            else: rgb = (128, 128, 128)
         else:
             if matched_base == "Body":
-                if "Bg" in search_name:
+                rgb = current_body_bg if "Bg" in search_name else current_body_color
+            elif matched_base == "Emphasis":
+                rgb = white if is_dark_theme_var else use_map["EmphasisColor"]
+            elif matched_base == "Link":
+                rgb = use_map["Primary"]
+            elif matched_base == "Border":
+                rgb = use_map["BorderColor"]
+            elif matched_base in ["Table", "Alert", "Badge", "Navbar", "Nav", "ListGroupItem", "Dropdown", "Card", "Modal", "Toast", "Offcanvas"]:
+                # Use body bg for these in glass mode if it's a "Bg" variable
+                if "Bg" in search_name or "Background" in search_name:
                     rgb = current_body_bg
                 else:
-                    rgb = current_body_color
-            elif matched_base == "Emphasis":
-                rgb = base_map["Light"] if is_dark_theme else base_map["EmphasisColor"]
-            elif matched_base == "Link":
-                rgb = base_map["Primary"]
-            elif matched_base == "Border":
-                rgb = base_map["BorderColor"]
-            elif matched_base in ["Table", "Alert", "Badge", "Navbar", "Nav", "ListGroupItem", "Dropdown"]:
-                rgb = base_map["Secondary"]
+                    rgb = use_map["Secondary"]
             else:
-                rgb = base_map.get(matched_base, (128, 128, 128))
+                rgb = use_map.get(matched_base, (128, 128, 128))
             
-            # Sub-category override (e.g., SuccessAlert)
             for color_base in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger", "Light", "Dark"]:
                 if color_base in search_name and color_base != matched_base:
-                    rgb = base_map[color_base]
+                    rgb = use_map[color_base]
                     break
         
-        # 2. Apply modifiers and ensure contrast
         if "TextEmphasis" in search_name:
-            # Contrast against BgSubtle of the same color
             bg_subtle = lighten(rgb, 40) if effective_light_bg else darken(rgb, 40)
             rgb = ensure_contrast_ratio(rgb, bg_subtle, 7.0)
         elif "BgSubtle" in search_name:
@@ -379,48 +387,23 @@ def generate_css(colors: list, ctbs_vars: list[str] | None = None) -> str:
         elif "Striped" in search_name:
             rgb = darken(rgb, 5) if effective_light_bg else lighten(rgb, 5)
         elif "Color" in search_name and matched_base not in ["Body", "Emphasis"]:
-            # General text color on body background
             rgb = ensure_contrast_ratio(rgb, current_body_bg, 7.0)
         
-        if is_alpha:
-            return f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, {alpha_val})"
-        if is_rgb:
-            return f"{rgb[0]}, {rgb[1]}, {rgb[2]}"
-        return rgb_to_hex(rgb)
-        
-        if is_alpha:
-            return f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, {alpha_val})"
-        if is_rgb:
-            return f"{rgb[0]}, {rgb[1]}, {rgb[2]}"
+        if is_alpha: return f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, {alpha_val})"
+        if is_rgb: return f"{rgb[0]}, {rgb[1]}, {rgb[2]}"
         return rgb_to_hex(rgb)
 
-    lines = []
-    lines.append("/* GENERATED COLOR VARIABLES */")
-    lines.append(f"/* Source: image */")
-    lines.append("")
-    lines.append(":root {")
-    
+    lines = ["/* GENERATED COLOR VARIABLES */", "/* Source: image */", "", ":root {"]
     if ctbs_vars:
         lines.append("    /* === CTBS SEMANTIC VARIABLES === */")
-        
-        # Sort and deduplicate CTBS variables
         unique_vars = sorted(list(set(ctbs_vars)))
-        
-        # Filter out Glass variables from theme generation - they belong in ui-config.css
         unique_vars = [v for v in unique_vars if "Glass" not in v]
-        
-        # We need a list of variables we already processed to avoid duplicates
         processed_vars = set()
-        
         for var in unique_vars:
-            if var in processed_vars:
-                continue
-            
+            if var in processed_vars: continue
             val = get_ctbs_color(var)
             lines.append(f"    {var}: {val};")
             processed_vars.add(var)
-            
-            # Ensure every variable has an RGB variant for transparency support
             if not var.endswith("Rgb"):
                 rgb_var = var + "Rgb"
                 if rgb_var not in processed_vars:
@@ -428,37 +411,38 @@ def generate_css(colors: list, ctbs_vars: list[str] | None = None) -> str:
                     lines.append(f"    {rgb_var}: {rgb_val};")
                     processed_vars.add(rgb_var)
     else:
-        # Fallback to old behavior if no vars provided
         lines.append("    /* === THEME COLORS === */")
-        for name, rgb in base_map.items():
-            if name in ["White", "Black", "Gray"]: continue
+        for name, rgb in full_light_map.items():
+            if name in ["White", "Black", "Gray", "BodyBg", "BodyColor", "EmphasisColor", "LinkColor", "BorderColor"]: continue
             lines.append(f"    --color-{name.lower()}: {rgb_to_hex(rgb)};")
-    
     lines.append("}")
     return "\n".join(lines)
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Generate Bootstrap 5 CSS variables from an image"
-    )
-    parser.add_argument("image", help="Path to source image")
-    parser.add_argument("--blur", action="store_true", default=True,
-                        help="Apply blur before extraction (default: True)")
-    parser.add_argument("--no-blur", action="store_false", dest="blur",
-                        help="Skip blur, analyze raw image")
-    parser.add_argument("--output", "-o", help="Output file (default: stdout)")
-    parser.add_argument("--clusters", "-c", type=int, default=12,
-                        help="Number of color clusters (default: 12)")
-    parser.add_argument("--vars-file", default="bs/ctbs-variables.css",
-                        help="Path to ctbs-variables.css to extract variables from")
+    parser = argparse.ArgumentParser(description="Generate Bootstrap 5 CSS variables from images")
+    parser.add_argument("image", help="Path to light source image")
+    parser.add_argument("--dark-image", help="Path to dark source image (optional)")
+    parser.add_argument("--blur", action="store_true", default=True, help="Apply blur before extraction")
+    parser.add_argument("--no-blur", action="store_false", dest="blur", help="Skip blur")
+    parser.add_argument("--output", "-o", help="Output file")
+    parser.add_argument("--clusters", "-c", type=int, default=12, help="Number of clusters (light)")
+    parser.add_argument("--dark-clusters", type=int, default=12, help="Number of clusters (dark)")
+    parser.add_argument("--vars-file", default="bs/ctbs-variables.css", help="Path to variables file")
+    parser.add_argument("--overrides-file", default="bs/bootstrap-overrides.css", help="Path to overrides file to detect used variables")
     
     args = parser.parse_args()
     
     try:
         ctbs_vars = parse_ctbs_variables(args.vars_file)
-        colors = extract_colors(args.image, args.blur, args.clusters)
-        css = generate_css(colors, ctbs_vars)
+        # Also parse overrides to ensure we generate everything that's actually used
+        if Path(args.overrides_file).exists():
+            ctbs_vars.extend(parse_ctbs_variables(args.overrides_file))
+        
+        light_colors = extract_colors(args.image, args.blur, args.clusters)
+        dark_colors = extract_colors(args.dark_image, args.blur, args.dark_clusters) if args.dark_image else None
+        
+        css = generate_css(light_colors, dark_colors, ctbs_vars)
         
         if args.output:
             Path(args.output).write_text(css)

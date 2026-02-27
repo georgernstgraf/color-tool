@@ -6,6 +6,39 @@ import os
 sys.path.append(os.getcwd())
 import ColorSim
 
+import re
+from pathlib import Path
+
+def test_variable_coverage():
+    print("\n--- VARIABLE COVERAGE TEST ---")
+    overrides_path = Path("bs/bootstrap-overrides.css")
+    theme_paths = list(Path("bs").glob("*-theme.css"))
+    
+    if not overrides_path.exists():
+        print("Error: bootstrap-overrides.css not found")
+        return False
+
+    overrides_content = overrides_path.read_text()
+    used_vars = set(re.findall(r'--CTBS-[a-zA-Z0-9-]+', overrides_content))
+    print(f"Found {len(used_vars)} unique --CTBS- variables in bootstrap-overrides.css")
+    
+    all_passed = True
+    for theme_path in theme_paths:
+        theme_content = theme_path.read_text()
+        defined_vars = set(re.findall(r'--CTBS-[a-zA-Z0-9-]+', theme_content))
+        
+        missing = sorted([v for v in used_vars if v not in defined_vars and "Glass" not in v])
+        
+        if missing:
+            print(f"[FAIL] {theme_path.name}: MISSING {len(missing)} variables")
+            for m in missing:
+                print(f"    - {m}")
+            all_passed = False
+        else:
+            print(f"[PASS] {theme_path.name}: All variables present")
+            
+    return all_passed
+
 def test_contrast():
     # Sample palette from a "Lego" like image
     palette = [
@@ -43,7 +76,7 @@ def test_contrast():
         "--CTBS-DarkThemeBodyBg"
     ]
     
-    css = ColorSim.generate_css(palette, ctbs_vars)
+    css = ColorSim.generate_css(palette, None, ctbs_vars)
     print("--- GENERATED CSS (Subset) ---")
     
     # Simple parser for the output to check contrast
@@ -84,4 +117,7 @@ def test_contrast():
     check_pair("--CTBS-DarkThemeWarningTextEmphasis", "--CTBS-DarkThemeWarningBgSubtle", "Dark")
 
 if __name__ == "__main__":
+    success = test_variable_coverage()
     test_contrast()
+    if not success:
+        sys.exit(1)
