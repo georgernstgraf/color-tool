@@ -4,12 +4,20 @@ This project provides a comprehensive system for creating color overrides for Bo
 
 ## Architecture
 
-The system uses a 4-layer loading strategy for maximum flexibility:
+The system uses a 5-layer loading strategy for maximum flexibility:
 
 0.  **`bootstrap.css`**: The original Bootstrap framework (layout, components, logic).
-1.  **`ctbs-variables.css`**: Defines the "Internal" semantic variables (`--CTBS-...`) with the original Bootstrap color values.
-2.  **`your-theme.css`** (Optional): A generated file that overrides the `--CTBS-...` variables (e.g., using colors from an image).
-3.  **`bootstrap-overrides.css`**: The "Patch" file that connects the `--CTBS-...` variables to the actual Bootstrap components.
+1.  **`ui-config.css`**: Global "knobs" for UI behavior (opacity, blur) independent of colors.
+2.  **`ctbs-variables.css`**: Defines the "Internal" semantic variables (`--CTBS-...`) with the original Bootstrap color values.
+3.  **`your-theme.css`** (Optional): A generated file that overrides the `--CTBS-...` variables (e.g., using colors from an image).
+4.  **`bootstrap-overrides.css`**: The "Patch" file that connects the `--CTBS-...` variables to the actual Bootstrap components.
+
+## Features
+
+- **Automated WCAG AAA Compliance**: The generator intelligently adjusts color lightness to ensure a minimum 7:1 contrast ratio for all text elements.
+- **Image-to-Palette Generation**: Uses k-means clustering (up to 12 clusters) to extract harmonious colors from any background image.
+- **Glassmorphism Support**: Native support for translucency and `backdrop-filter` for containers (Cards, Navbars, Alerts).
+- **Independent UI Control**: Adjust UI opacity and blur globally via `ui-config.css` without re-running the generator.
 
 ## Tools
 
@@ -25,19 +33,20 @@ Parses the standard Bootstrap CSS, finds all literal color codes (hex, rgb, rgba
 
 ### 2. ColorSim Image-Based Generator (`ColorSim.py`)
 
-Analyzes an image to extract a dominant color palette and maps it to the semantic variables identified during extraction. It ensures WCAG contrast compliance and applies intelligent modifications (e.g., darkening for hover states, lightening for subtle backgrounds).
+Analyzes an image to extract a dominant color palette and maps it to the semantic variables identified during extraction. 
 
 -   **Usage**: `source venv/bin/activate && python3 ColorSim.py <image_path> [-o OUTPUT]`
 -   **Arguments**:
     -   `image`: Path to the source image (e.g., `img/bg-krokus.jpg`).
     -   `-o`, `--output`: Output path for the generated theme (e.g., `bs/krokus-theme.css`).
+    -   `-c`, `--clusters`: Number of color clusters to sample (default: 12).
     -   `--vars-file`: Path to the `ctbs-variables.css` file to extract variable names from.
 
 ## Setup
 
 1.  Create a virtual environment: `python3 -m venv venv`
 2.  Activate it: `source venv/bin/activate`
-3.  Install dependencies: `pip install colorthief Pillow`
+3.  Install dependencies: `pip install -r requirements.txt`
 
 ## Example Workflow
 
