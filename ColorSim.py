@@ -374,6 +374,12 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
         if is_dark_theme_var and not full_dark_map:
             current_body_bg = full_light_map["Dark"]
             current_body_color = full_light_map["Light"]
+        
+        # Determine if we are in a component that might be placed on BodyBg or a component background
+        is_alert = "Alert" in search_name
+        is_outline_btn = "Outline" in search_name and "Btn" in search_name
+        is_bg = "Bg" in search_name or "Background" in search_name
+        is_color = "Color" in search_name or "Text" in search_name
 
         matched_base = None
         for base in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger", "Light", "Dark", "Gray", "Body", "Border", "Emphasis", "Link", "Form", "Btn", "Table", "Alert", "Badge", "Navbar", "Nav", "ListGroupItem", "Dropdown", "Card", "Modal", "Toast", "Offcanvas", "Blue", "Indigo", "Purple", "Pink", "Red", "Orange", "Yellow", "Green", "Teal", "Cyan"]:
@@ -388,9 +394,6 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
             if match:
                 alpha_val = f"0.{match.group(1)}"
                 if alpha_val == "0.0": alpha_val = "0"
-        
-        is_bg = "Bg" in search_name or "Background" in search_name
-        is_color = "Color" in search_name or "Text" in search_name
         
         if not matched_base:
             if "White" in search_name: rgb = white
@@ -438,20 +441,27 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
             # For Alert Text Emphasis, check against matching BgSubtle
             h, s, l = rgb_to_hsl(rgb)
             if effective_light_bg:
-                bg_subtle = hsl_to_rgb((h, s, 94))
+                bg_subtle = hsl_to_rgb((h, s, 96)) # Slightly lighter
             else:
-                bg_subtle = hsl_to_rgb((h, s, 10))
-            rgb = ensure_contrast_ratio(rgb, bg_subtle, 7.0)
+                bg_subtle = hsl_to_rgb((h, s, 8)) # Slightly darker
+            
+            # Check if this is an alert-specific text color
+            if is_alert or "TextEmphasis" in search_name:
+                rgb = ensure_contrast_ratio(rgb, bg_subtle, 7.0)
+            
             rgb = ensure_contrast_ratio(rgb, current_body_bg, 7.0)
         elif "BgSubtle" in search_name or (is_bg and matched_base in ["Primary", "Secondary", "Success", "Info", "Warning", "Danger", "Light", "Dark"] and any(c in search_name for c in ["Table", "Alert", "Badge"])):
             # Subtle backgrounds for components
             h, s, l = rgb_to_hsl(rgb)
             if effective_light_bg:
-                # Target very light: l >= 94%
-                rgb = hsl_to_rgb((h, s, max(l, 94)))
+                # Target very light: l >= 96%
+                rgb = hsl_to_rgb((h, s, max(l, 96)))
             else:
-                # Target very dark: l <= 10%
-                rgb = hsl_to_rgb((h, s, min(l, 10)))
+                # Target very dark: l <= 8%
+                rgb = hsl_to_rgb((h, s, min(l, 8)))
+        elif is_outline_btn and is_color:
+            # Outline buttons must contrast with BodyBg
+            rgb = ensure_contrast_ratio(rgb, current_body_bg, 7.0)
         elif "BorderSubtle" in search_name:
             h, s, l = rgb_to_hsl(rgb)
             if effective_light_bg:

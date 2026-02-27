@@ -69,7 +69,7 @@
   --bs-dark-border-subtle: var(--CTBS-DarkBorderSubtle);
   --bs-white-rgb: var(--CTBS-WhiteRgb);
   --bs-black-rgb: var(--CTBS-BlackRgb);
-  --bs-gradient: linear-gradient(180deg, var(--CTBS-Gradient), var(--CTBS-Gradient-1));
+  --bs-gradient: linear-gradient(180deg, var(--CTBS-Gradient-1), var(--CTBS-Gradient));
   --bs-body-color: var(--CTBS-BodyColor);
   --bs-body-color-rgb: var(--CTBS-BodyColorRgb);
   --bs-body-bg: var(--CTBS-BodyBg);
@@ -302,7 +302,7 @@
   color: var(--CTBS-Color-1);
 }
 .btn {
-  --bs-btn-box-shadow: inset 0 1px 0 var(--CTBS-BoxShadow-3), 0 1px 1px var(--CTBS-BoxShadow-4);
+  --bs-btn-box-shadow: inset 0 1px 0 var(--CTBS-BoxShadow-4), 0 1px 1px var(--CTBS-BoxShadow-3);
 }
 .btn-primary {
   --bs-btn-color: var(--CTBS-PrimaryBtnColor);
