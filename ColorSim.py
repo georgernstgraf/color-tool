@@ -406,6 +406,9 @@ def generate_css(colors: list, ctbs_vars: list[str] | None = None) -> str:
         # Sort and deduplicate CTBS variables
         unique_vars = sorted(list(set(ctbs_vars)))
         
+        # Filter out Glass variables from theme generation - they belong in ui-config.css
+        unique_vars = [v for v in unique_vars if "Glass" not in v]
+        
         # We need a list of variables we already processed to avoid duplicates
         processed_vars = set()
         
