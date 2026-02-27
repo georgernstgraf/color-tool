@@ -775,8 +775,8 @@
   backdrop-filter: blur(var(--CTBS-GlassBlur));
 }
 .placeholder-wave {
-  -webkit-mask-image: linear-gradient(130deg, var(--CTBS-WebkitMaskImage) 55%, var(--CTBS-WebkitMaskImage-1) 75%, var(--CTBS-WebkitMaskImage) 95%);
-  mask-image: linear-gradient(130deg, var(--CTBS-MaskImage) 55%, var(--CTBS-MaskImage-1) 75%, var(--CTBS-MaskImage) 95%);
+  -webkit-mask-image: linear-gradient(130deg, var(--CTBS-WebkitMaskImage-1) 55%, var(--CTBS-WebkitMaskImage) 75%, var(--CTBS-WebkitMaskImage-1) 95%);
+  mask-image: linear-gradient(130deg, var(--CTBS-MaskImage-1) 55%, var(--CTBS-MaskImage) 75%, var(--CTBS-MaskImage-1) 95%);
 }
 .text-bg-primary {
   color: var(--CTBS-Color-1) !important;

@@ -562,8 +562,14 @@ def main():
         if Path(args.overrides_file).exists():
             ctbs_vars.extend(parse_ctbs_variables(args.overrides_file))
         
+        print(f"Extracting light colors from {args.image} ({args.clusters} clusters)...", file=sys.stderr)
         light_colors = extract_colors(args.image, args.blur, args.clusters)
-        dark_colors = extract_colors(args.dark_image, args.blur, args.dark_clusters) if args.dark_image else None
+        
+        dark_source = args.dark_image if args.dark_image else args.image
+        is_fallback = args.dark_image is None
+        fallback_msg = " (fallback from primary image)" if is_fallback else ""
+        print(f"Extracting dark colors from {dark_source}{fallback_msg} ({args.dark_clusters} clusters)...", file=sys.stderr)
+        dark_colors = extract_colors(dark_source, args.blur, args.dark_clusters)
         
         css = generate_css(light_colors, dark_colors, ctbs_vars)
         
