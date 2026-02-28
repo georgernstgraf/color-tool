@@ -37,4 +37,8 @@ python ColorSim.py img/bg-lego-lightblue.png --dark-image img/bg-lego-darkblue.p
 echo "   - Loewe"
 python ColorSim.py img/loewe.jpg --output bs/loewe-theme.css --clusters 12
 
+# Wave
+echo "   - Wave"
+python ColorSim.py img/wave.jpg --output bs/wave-theme.css --clusters 12
+
 echo "Done!"

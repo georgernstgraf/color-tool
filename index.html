@@ -17,7 +17,8 @@
           href="bs/ui-config.css">
 
     <!-- Theme placeholder (will be swapped by specific files) -->
-    <link id="themeStylesheet" rel="stylesheet"
+    <link id="themeStylesheet"
+          rel="stylesheet"
           href="bs/herbst-theme.css">
 
     <!-- Component Overrides (Apply variables to components) -->
@@ -66,18 +67,34 @@
             <div class="d-flex gap-3 align-items-center">
                 <div class="d-flex align-items-center gap-2">
                     <label class="small text-nowrap">Glass Opacity:</label>
-                    <input type="range" id="opacityRange" class="form-range" min="0" max="1" step="0.05" value="0.3" style="width: 100px;">
+                    <input type="range"
+                           id="opacityRange"
+                           class="form-range"
+                           min="0"
+                           max="1"
+                           step="0.05"
+                           value="0.3"
+                           style="width: 100px;">
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <label class="small text-nowrap">Blur:</label>
-                    <input type="range" id="blurRange" class="form-range" min="0" max="20" step="1" value="8" style="width: 100px;">
+                    <input type="range"
+                           id="blurRange"
+                           class="form-range"
+                           min="0"
+                           max="20"
+                           step="1"
+                           value="8"
+                           style="width: 100px;">
                 </div>
-                <select id="themeSelect" class="form-select w-auto">
+                <select id="themeSelect"
+                        class="form-select w-auto">
                     <option value="herbst">Herbst (Autumn)</option>
                     <option value="krokus">Krokus (Spring)</option>
                     <option value="sommer">Sommer (Summer)</option>
                     <option value="lego">Lego (Bright)</option>
                     <option value="loewe">Loewe (Lion)</option>
+                    <option value="wave">Welle</option>
                 </select>
                 <button id="themeToggle"
                         class="btn btn-outline-primary">Toggle Dark Mode</button>
@@ -114,10 +131,14 @@
                 </div>
                 <div class="col-12 mt-3">
                     <h5>Button Groups & Sizing</h5>
-                    <div class="btn-group me-2" role="group">
-                        <button type="button" class="btn btn-primary">Left</button>
-                        <button type="button" class="btn btn-primary">Middle</button>
-                        <button type="button" class="btn btn-primary">Right</button>
+                    <div class="btn-group me-2"
+                         role="group">
+                        <button type="button"
+                                class="btn btn-primary">Left</button>
+                        <button type="button"
+                                class="btn btn-primary">Middle</button>
+                        <button type="button"
+                                class="btn btn-primary">Right</button>
                     </div>
                     <button class="btn btn-primary btn-lg">Large</button>
                     <button class="btn btn-primary btn-sm">Small</button>
@@ -130,20 +151,27 @@
             <div class="row">
                 <div class="col-md-8">
                     <h3>Alerts (WCAG AAA Contrast Test)</h3>
-                    <div class="alert alert-primary alert-dismissible fade show" role="alert">
+                    <div class="alert alert-primary alert-dismissible fade show"
+                         role="alert">
                         <strong>Primary!</strong> This alert should be readable and AAA compliant on glass.
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="alert"></button>
                     </div>
-                    <div class="alert alert-success" role="alert">
+                    <div class="alert alert-success"
+                         role="alert">
                         <strong>Success!</strong> Testing dark theme text contrast.
                     </div>
-                    <div class="alert alert-warning" role="alert">
+                    <div class="alert alert-warning"
+                         role="alert">
                         <strong>Warning!</strong> Check the emphasis color contrast.
                     </div>
-                    <div class="alert alert-danger" role="alert">
+                    <div class="alert alert-danger"
+                         role="alert">
                         <strong>Danger!</strong> High visibility required here.
                     </div>
-                    <div class="alert alert-info" role="alert">
+                    <div class="alert alert-info"
+                         role="alert">
                         <strong>Info!</strong> Glassmorphism opacity test.
                     </div>
                 </div>
@@ -177,7 +205,8 @@
                         <div class="card-body">
                             <h5 class="card-title">Card Title</h5>
                             <p class="card-text">Standard card content with themed background and glass effect.</p>
-                            <a href="#" class="btn btn-primary">Action</a>
+                            <a href="#"
+                               class="btn btn-primary">Action</a>
                         </div>
                         <div class="card-footer text-body-secondary">2 days ago</div>
                     </div>
@@ -212,7 +241,9 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label class="form-label">Text Input (Focus Test)</label>
-                        <input type="text" class="form-control" placeholder="Focus me to see ring color">
+                        <input type="text"
+                               class="form-control"
+                               placeholder="Focus me to see ring color">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Select Menu</label>
@@ -224,25 +255,43 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Range</label>
-                        <input type="range" class="form-range" id="customRange2">
+                        <input type="range"
+                               class="form-range"
+                               id="customRange2">
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked>
-                        <label class="form-check-label" for="flexCheckChecked">Checked checkbox</label>
+                        <input class="form-check-input"
+                               type="checkbox"
+                               value=""
+                               id="flexCheckChecked"
+                               checked>
+                        <label class="form-check-label"
+                               for="flexCheckChecked">Checked checkbox</label>
                     </div>
                     <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault" checked>
-                        <label class="form-check-label" for="flexSwitchCheckDefault">Checked switch</label>
+                        <input class="form-check-input"
+                               type="checkbox"
+                               role="switch"
+                               id="flexSwitchCheckDefault"
+                               checked>
+                        <label class="form-check-label"
+                               for="flexSwitchCheckDefault">Checked switch</label>
                     </div>
                     <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon1">@</span>
-                        <input type="text" class="form-control" placeholder="Username">
+                        <span class="input-group-text"
+                              id="basic-addon1">@</span>
+                        <input type="text"
+                               class="form-control"
+                               placeholder="Username">
                     </div>
                     <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Recipient's username">
-                        <button class="btn btn-outline-secondary" type="button">Button</button>
+                        <input type="text"
+                               class="form-control"
+                               placeholder="Recipient's username">
+                        <button class="btn btn-outline-secondary"
+                                type="button">Button</button>
                     </div>
                 </div>
             </div>
@@ -267,8 +316,11 @@
                             <td>Themed background</td>
                             <td><span class="badge text-bg-primary">Active</span></td>
                             <td>
-                                <div class="progress" role="progressbar" style="height: 10px">
-                                    <div class="progress-bar" style="width: 25%"></div>
+                                <div class="progress"
+                                     role="progressbar"
+                                     style="height: 10px">
+                                    <div class="progress-bar"
+                                         style="width: 25%"></div>
                                 </div>
                             </td>
                         </tr>
@@ -277,18 +329,24 @@
                             <td>Positive result</td>
                             <td><span class="badge text-bg-success">Done</span></td>
                             <td>
-                                <div class="progress" role="progressbar" style="height: 10px">
-                                    <div class="progress-bar bg-success" style="width: 100%"></div>
+                                <div class="progress"
+                                     role="progressbar"
+                                     style="height: 10px">
+                                    <div class="progress-bar bg-success"
+                                         style="width: 100%"></div>
                                 </div>
                             </td>
                         </tr>
                         <tr class="table-warning">
                             <td>Warning</td>
                             <td>Action required</td>
-                             <td><span class="badge text-bg-warning">Pending</span></td>
+                            <td><span class="badge text-bg-warning">Pending</span></td>
                             <td>
-                                <div class="progress" role="progressbar" style="height: 10px">
-                                    <div class="progress-bar bg-warning" style="width: 60%"></div>
+                                <div class="progress"
+                                     role="progressbar"
+                                     style="height: 10px">
+                                    <div class="progress-bar bg-warning"
+                                         style="width: 60%"></div>
                                 </div>
                             </td>
                         </tr>
@@ -297,18 +355,24 @@
                             <td>Critical failure</td>
                             <td><span class="badge text-bg-danger">Error</span></td>
                             <td>
-                                <div class="progress" role="progressbar" style="height: 10px">
-                                    <div class="progress-bar bg-danger" style="width: 85%"></div>
+                                <div class="progress"
+                                     role="progressbar"
+                                     style="height: 10px">
+                                    <div class="progress-bar bg-danger"
+                                         style="width: 85%"></div>
                                 </div>
                             </td>
                         </tr>
                         <tr class="table-info">
                             <td>Info</td>
                             <td>General info</td>
-                             <td><span class="badge text-bg-info">Help</span></td>
+                            <td><span class="badge text-bg-info">Help</span></td>
                             <td>
-                                <div class="progress" role="progressbar" style="height: 10px">
-                                    <div class="progress-bar bg-info" style="width: 45%"></div>
+                                <div class="progress"
+                                     role="progressbar"
+                                     style="height: 10px">
+                                    <div class="progress-bar bg-info"
+                                         style="width: 45%"></div>
                                 </div>
                             </td>
                         </tr>
@@ -320,24 +384,41 @@
         <!-- NAVS & TABS SECTION -->
         <section class="component-section border">
             <h3>Navs & Pagination</h3>
-            <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" type="button">Active Pill</button>
+            <ul class="nav nav-pills mb-3"
+                id="pills-tab"
+                role="tablist">
+                <li class="nav-item"
+                    role="presentation">
+                    <button class="nav-link active"
+                            id="pills-home-tab"
+                            data-bs-toggle="pill"
+                            type="button">Active Pill</button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="pills-profile-tab" data-bs-toggle="pill" type="button">Normal Pill</button>
+                <li class="nav-item"
+                    role="presentation">
+                    <button class="nav-link"
+                            id="pills-profile-tab"
+                            data-bs-toggle="pill"
+                            type="button">Normal Pill</button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link disabled" type="button" disabled>Disabled</button>
+                <li class="nav-item"
+                    role="presentation">
+                    <button class="nav-link disabled"
+                            type="button"
+                            disabled>Disabled</button>
                 </li>
             </ul>
             <nav>
                 <ul class="pagination">
                     <li class="page-item disabled"><a class="page-link">Previous</a></li>
-                    <li class="page-item"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item active"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                    <li class="page-item"><a class="page-link"
+                           href="#">1</a></li>
+                    <li class="page-item active"><a class="page-link"
+                           href="#">2</a></li>
+                    <li class="page-item"><a class="page-link"
+                           href="#">3</a></li>
+                    <li class="page-item"><a class="page-link"
+                           href="#">Next</a></li>
                 </ul>
             </nav>
         </section>
@@ -350,28 +431,29 @@
         const themeToggle = document.getElementById('themeToggle');
         const opacityRange = document.getElementById('opacityRange');
         const blurRange = document.getElementById('blurRange');
-        
+
         // Background image mapping
         const backgrounds = {
             'herbst': { light: 'img/herbst.jpg', dark: 'img/herbst.jpg' },
             'krokus': { light: 'img/bg-krokus.jpg', dark: 'img/bg-krokus.jpg' },
             'sommer': { light: 'img/sommer.jpg', dark: 'img/sommer.jpg' },
             'lego': { light: 'img/bg-lego-lightblue.png', dark: 'img/bg-lego-darkblue.png' },
-            'loewe': { light: 'img/loewe.jpg', dark: 'img/loewe.jpg' }
+            'loewe': { light: 'img/loewe.jpg', dark: 'img/loewe.jpg' },
+            'wave': { light: 'img/wave.jpg', dark: 'img/wave.jpg' }
         };
 
         function updateTheme() {
             const theme = themeSelect.value;
             themeStylesheet.href = `bs/${theme}-theme.css`;
             themeTitle.innerText = theme.charAt(0).toUpperCase() + theme.slice(1) + " Theme";
-            
+
             const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
             const bgConfig = backgrounds[theme];
             const bgPath = isDark ? bgConfig.dark : bgConfig.light;
 
             // Update body background
             document.body.style.setProperty('--bg-image', `url('${bgPath}')`);
-            
+
             // Set styles dynamically for the pseudo-element background
             let style = document.getElementById('dynamic-bg-style');
             if (!style) {
@@ -379,10 +461,10 @@
                 style.id = 'dynamic-bg-style';
                 document.head.appendChild(style);
             }
-            
+
             const blendMode = isDark ? 'multiply' : 'normal';
             const bgColor = isDark ? '#555' : 'transparent';
-            
+
             style.innerHTML = `
                 body::before {
                     background-image: url('${bgPath}');
@@ -400,7 +482,7 @@
             document.documentElement.setAttribute('data-bs-theme', next);
             themeToggle.innerText = next === 'light' ? 'Toggle Dark Mode' : 'Toggle Light Mode';
             updateTheme();
-        }
+        };
 
         opacityRange.oninput = (e) => {
             document.documentElement.style.setProperty('--CTBS-GlassOpacity', e.target.value);
