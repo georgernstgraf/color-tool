@@ -1,2 +1,4 @@
 colorthief
 Pillow
+playwright
+pytest

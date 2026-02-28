@@ -25,6 +25,8 @@ The system uses a 5-layer loading strategy for maximum flexibility:
 
 Parses the standard Bootstrap CSS, finds all literal color codes (hex, rgb, rgba), and replaces them with unified internal semantic variables (`--CTBS-`). It uses contextual analysis of selectors and properties to generate meaningful variable names (e.g., `--CTBS-PrimaryBtnHoverBg`).
 
+This tool generates both `bs/bootstrap-overrides.css` and `bs/ctbs-variables.css` (CTPS/CTBS variables).
+
 -   **Usage**: `python3 extract_bootstrap_colors.py [-i INPUT] [-v VARS] [-o OUTPUT]`
 -   **Arguments**:
     -   `-i`, `--input`: Path to source Bootstrap CSS (default: `bs/bootstrap-5.3.8.css`).
@@ -119,9 +121,39 @@ python3 ColorSim.py img/custom.jpg \
 
 ## Setup
 
+All Python scripts in this repository must be started with `venv` activated.
+
 1.  Create a virtual environment: `python3 -m venv venv`
 2.  Activate it: `source venv/bin/activate`
 3.  Install dependencies: `pip install -r requirements.txt`
+4.  Install browser runtime for rendered WCAG tests: `python -m playwright install chromium`
+
+## Browser-Automated WCAG Checks
+
+The test suite includes `test_browser_wcag.py`, which opens `index.html` in headless Chromium via Playwright, scrapes visible text nodes from rendered elements, and validates text/background contrast for all bundled themes in both light and dark mode.
+
+- It serves the project with a local HTTP server during the test run (no manual server setup required).
+- It checks computed colors from actually rendered elements (not just raw CSS variables).
+- It uses WCAG AAA thresholds by default (`7.0` normal text, `4.5` large text).
+- It is skipped automatically if Playwright/Chromium is not available in the current environment.
+
+Run it with:
+
+```bash
+python -m pytest -q test_browser_wcag.py
+```
+
+To verify only UI control traversal (theme selector + light/dark toggle) from the test suite, run:
+
+```bash
+python -m pytest -q test_browser_wcag.py -k click_through
+```
+
+To run the focused active-pill visibility check, run:
+
+```bash
+python -m pytest -q test_browser_wcag.py -k active_pill
+```
 
 ## Example Workflow
 
