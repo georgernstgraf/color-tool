@@ -410,20 +410,26 @@ class BootstrapExtractor:
                     if color_lines:
                         res.append(f"{indent}{selector} {{\n" + "\n".join(color_lines) + f"\n{indent}}}")
                         
-                        # Inject Dark Mode AAA overrides for alerts
+                        # Inject Dark Mode overrides for alerts using themed CTBS variables
                         if ".alert-" in selector and not selector.startswith("@"):
-                            if ".alert-primary" in selector:
-                                res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n{indent}  --bs-alert-color: #9ec5fe;\n{indent}  --bs-alert-link-color: #9ec5fe;\n{indent}}}")
-                            elif ".alert-secondary" in selector:
-                                res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n{indent}  --bs-alert-color: #dee2e6;\n{indent}  --bs-alert-link-color: #dee2e6;\n{indent}}}")
-                            elif ".alert-success" in selector:
-                                res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n{indent}  --bs-alert-color: #a3cfbb;\n{indent}  --bs-alert-link-color: #a3cfbb;\n{indent}}}")
-                            elif ".alert-danger" in selector:
-                                res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n{indent}  --bs-alert-color: #f1aeb5;\n{indent}  --bs-alert-link-color: #f1aeb5;\n{indent}}}")
-                            elif ".alert-warning" in selector:
-                                res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n{indent}  --bs-alert-color: #ffe69c;\n{indent}  --bs-alert-link-color: #ffe69c;\n{indent}}}")
-                            elif ".alert-info" in selector:
-                                res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n{indent}  --bs-alert-color: #9eeaf9;\n{indent}  --bs-alert-link-color: #9eeaf9;\n{indent}}}")
+                            role_map = {
+                                ".alert-primary": "Primary",
+                                ".alert-secondary": "Secondary",
+                                ".alert-success": "Success",
+                                ".alert-danger": "Danger",
+                                ".alert-warning": "Warning",
+                                ".alert-info": "Info",
+                            }
+                            for alert_sel, role in role_map.items():
+                                if alert_sel in selector:
+                                    dark_rule_lines = [
+                                        f"{indent}  --bs-alert-color: var(--CTBS-DarkTheme{role}TextEmphasis);",
+                                        f"{indent}  --bs-alert-link-color: var(--CTBS-DarkTheme{role}TextEmphasis);",
+                                        f"{indent}  --bs-alert-bg: rgba(var(--CTBS-DarkTheme{role}BgSubtleRgb), var(--CTBS-GlassOpacity));",
+                                        f"{indent}  backdrop-filter: blur(var(--CTBS-GlassBlur));",
+                                    ]
+                                    res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n" + "\n".join(dark_rule_lines) + f"\n{indent}}}")
+                                    break
                 
                 i = j
             return "\n".join(res)

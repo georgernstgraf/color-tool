@@ -10,3 +10,6 @@ __pycache__/
 # OS files
 .DS_Store
 Thumbs.db
+bs/bootstrap-overrides.css
+bs/ctbs-variables.css
+bs/*-theme.css

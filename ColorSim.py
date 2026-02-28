@@ -123,28 +123,33 @@ def ensure_contrast(bg: tuple[int, int, int], target_ratio: float = 7.0) -> tupl
 
 
 def ensure_contrast_ratio(text_rgb: tuple[int, int, int], bg_rgb: tuple[int, int, int], target: float = 7.0) -> tuple[int, int, int]:
-    """Adjust text_rgb lightness until it meets target contrast ratio against bg_rgb."""
-    target_with_buffer = target + 0.1 # Increased buffer
-    
+    """Adjust text_rgb lightness (then saturation) until it meets target contrast ratio against bg_rgb.
+
+    Strategy (bounded correction per issue #7):
+    1. Sweep lightness at original saturation/hue.
+    2. If that fails, progressively reduce saturation and re-sweep lightness.
+       This preserves hue while giving more contrast headroom.
+    3. Fall back to black/white only as a last resort.
+    """
+    target_with_buffer = target + 0.1
+
     current_ratio = contrast_ratio(text_rgb, bg_rgb)
     if current_ratio >= target_with_buffer:
         return text_rgb
-    
+
     h, s, l = rgb_to_hsl(text_rgb)
     bg_lum = get_luminance(bg_rgb)
-    
-    # Try all lightness values to find the best fit
-    best_rgb = text_rgb
-    max_contrast = current_ratio
-    
+
     # Prefer direction based on background luminance
     if bg_lum > 0.5:
-        # Light background: Prefer darkening first
         search_range = list(range(int(l), -1, -1)) + list(range(int(l), 101))
     else:
-        # Dark background: Prefer lightening first
         search_range = list(range(int(l), 101)) + list(range(int(l), -1, -1))
-        
+
+    # Pass 1: sweep lightness at current saturation
+    best_rgb = text_rgb
+    max_contrast = current_ratio
+
     for new_l in search_range:
         c = hsl_to_rgb((h, s, new_l))
         ratio = contrast_ratio(c, bg_rgb)
@@ -153,21 +158,33 @@ def ensure_contrast_ratio(text_rgb: tuple[int, int, int], bg_rgb: tuple[int, int
         if ratio > max_contrast:
             max_contrast = ratio
             best_rgb = c
-            
-    # If we couldn't reach target with original hue/sat, try black/white
+
+    # Pass 2: progressively reduce saturation (preserves hue, widens contrast range)
+    for sat_step in (0.75, 0.50, 0.25, 0.0):
+        reduced_s = s * sat_step
+        for new_l in search_range:
+            c = hsl_to_rgb((h, reduced_s, new_l))
+            ratio = contrast_ratio(c, bg_rgb)
+            if ratio >= target_with_buffer:
+                return c
+            if ratio > max_contrast:
+                max_contrast = ratio
+                best_rgb = c
+
+    # Pass 3: last resort – pure black/white
     white = (255, 255, 255)
     black = (0, 0, 0)
     w_ratio = contrast_ratio(white, bg_rgb)
     b_ratio = contrast_ratio(black, bg_rgb)
-    
+
     if w_ratio >= target_with_buffer and w_ratio >= b_ratio: return white
     if b_ratio >= target_with_buffer: return black
-    
+
     # Still nothing? Return the absolute best found
     result = best_rgb
     if w_ratio > max_contrast: result = white
     if b_ratio > max_contrast: result = black
-    
+
     sys.stderr.write(f"Contrast adjustment: {rgb_to_hex(text_rgb)} on {rgb_to_hex(bg_rgb)} -> {rgb_to_hex(result)} (ratio {contrast_ratio(result, bg_rgb):.2f})\n")
     return result
 
@@ -530,9 +547,19 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
         candidates = []
         if "TextEmphasis" in base:
             candidates.append(base.replace("TextEmphasis", "BgSubtle"))
+
+        # Outline buttons in default state have transparent bg -> effective bg is BodyBg.
+        # Only match hover/active bg when the text var is itself a hover/active color.
+        is_outline = "Outline" in base and "Btn" in base
+        is_state_color = any(base.endswith(s) for s in ["ActiveColor", "HoverColor", "DisabledColor"])
+
         for suffix in ["ActiveColor", "HoverColor", "DisabledColor", "Color", "Text"]:
             if base.endswith(suffix):
                 root = base[:-len(suffix)]
+                if is_outline and not is_state_color:
+                    # For outline button default Color, skip to BodyBg fallback
+                    # (transparent bg in default state)
+                    break
                 candidates.extend([
                     root + "ActiveBg",
                     root + "HoverBg",
