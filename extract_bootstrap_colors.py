@@ -23,7 +23,7 @@ class BootstrapExtractor:
 
         # Glassmorphism eligible selectors
         self.glass_selectors = [
-            '.card', '.alert', '.modal-content', '.navbar', '.dropdown-menu', 
+            '.card', '.modal-content', '.navbar', '.dropdown-menu', 
             '.list-group-item', '.toast', '.offcanvas', '.content-wrapper', '.card-header', '.card-footer'
         ]
         self.glass_properties = ['background-color', 'background', '--bs-card-bg', '--bs-alert-bg', '--bs-navbar-bg', '--bs-dropdown-bg', '--bs-modal-bg']
@@ -437,40 +437,95 @@ class BootstrapExtractor:
         return get_color_blocks(css_text)
 
     def accessibility_tail_overrides(self):
-        return """
+        roles = ["Primary", "Secondary", "Success", "Info", "Warning", "Danger", "Light", "Dark"]
+        role_lower = [r.lower() for r in roles]
+
+        # --- .text-bg-* overrides: use contrast-corrected BtnColor vars ---
+        text_bg_lines = []
+        for role, rl in zip(roles, role_lower):
+            text_bg_lines.append(
+                f".text-bg-{rl} {{ color: var(--CTBS-{role}BtnColor) !important; }}"
+            )
+        text_bg_light = "\n".join(text_bg_lines)
+
+        # Dark-mode .text-bg-* use DarkTheme variants
+        text_bg_dark_lines = []
+        for role, rl in zip(roles, role_lower):
+            text_bg_dark_lines.append(
+                f"  [data-bs-theme=dark] .text-bg-{rl} {{ color: var(--CTBS-DarkTheme{role}BtnColor) !important; }}"
+            )
+        text_bg_dark = "\n".join(text_bg_dark_lines)
+
+        # --- Dark-mode outline button overrides ---
+        # Outline buttons exclude Light/Dark variants (rarely used in dark mode)
+        outline_roles = ["Primary", "Secondary", "Success", "Info", "Warning", "Danger"]
+        outline_role_lower = [r.lower() for r in outline_roles]
+        outline_dark_lines = []
+        for role, rl in zip(outline_roles, outline_role_lower):
+            outline_dark_lines.append(f"""  [data-bs-theme=dark] .btn-outline-{rl} {{
+    --bs-btn-color: var(--CTBS-DarkThemeOutline{role}BtnColor);
+    --bs-btn-border-color: var(--CTBS-DarkThemeOutline{role}BtnBorderColor);
+    --bs-btn-hover-color: var(--CTBS-DarkThemeOutline{role}BtnHoverColor);
+    --bs-btn-hover-bg: var(--CTBS-DarkThemeOutline{role}BtnHoverBg);
+    --bs-btn-hover-border-color: var(--CTBS-DarkThemeOutline{role}BtnHoverBorderColor);
+    --bs-btn-active-color: var(--CTBS-DarkThemeOutline{role}BtnActiveColor);
+    --bs-btn-active-bg: var(--CTBS-DarkThemeOutline{role}BtnActiveBg);
+    --bs-btn-active-border-color: var(--CTBS-DarkThemeOutline{role}BtnActiveBorderColor);
+    --bs-btn-disabled-color: var(--CTBS-DarkThemeOutline{role}BtnDisabledColor);
+    --bs-btn-disabled-border-color: var(--CTBS-DarkThemeOutline{role}BtnDisabledBorderColor);
+  }}""")
+        outline_dark = "\n".join(outline_dark_lines)
+
+        return f"""
 
 /* 3. ACCESSIBILITY SAFETY OVERRIDES (AAA-oriented) */
 :root,
 [data-bs-theme=light],
-[data-bs-theme=dark] {
+[data-bs-theme=dark] {{
   --bs-secondary-color: var(--CTBS-SecondaryColor);
-}
+}}
 
 .text-body-secondary,
 .nav-link.disabled,
 .page-link.disabled,
-.page-item.disabled .page-link {
+.page-item.disabled .page-link {{
   color: var(--bs-body-color) !important;
   opacity: 1;
-}
+}}
 
-.pagination .page-link {
+.pagination .page-link {{
   color: var(--bs-body-color);
   background-color: var(--bs-body-bg);
   border-color: var(--bs-border-color);
-}
+}}
 
-.pagination .page-item.active .page-link {
+.pagination .page-item.active .page-link {{
   color: var(--bs-body-bg);
   background-color: var(--bs-body-color);
   border-color: var(--bs-body-color);
-}
+}}
 
-.pagination .page-item.disabled .page-link {
+.pagination .page-item.disabled .page-link {{
   color: var(--bs-body-color) !important;
   background-color: var(--bs-body-bg);
   opacity: 1;
-}
+}}
+
+/* 4. TEXT-BG UTILITY CONTRAST OVERRIDES */
+/* Override Bootstrap !important color in .text-bg-* with themed btn-color */
+{text_bg_light}
+
+{text_bg_dark}
+
+/* Disable glass overlays inside colored utility cards so text-bg contrast is reliable */
+[class*="text-bg-"] .card-header,
+[class*="text-bg-"] .card-footer {{
+  background-color: transparent;
+  backdrop-filter: none;
+}}
+
+/* 5. DARK-MODE OUTLINE BUTTON OVERRIDES */
+{outline_dark}
 """
 
 def main():

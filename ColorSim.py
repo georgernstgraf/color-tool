@@ -560,14 +560,27 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
                     # For outline button default Color, skip to BodyBg fallback
                     # (transparent bg in default state)
                     break
-                candidates.extend([
-                    root + "ActiveBg",
-                    root + "HoverBg",
-                    root + "DisabledBg",
-                    root + "Bg",
-                    root + "Background",
-                    root + "BgSubtle",
-                ])
+                if is_state_color:
+                    # State-specific text: match against corresponding state bg first
+                    candidates.extend([
+                        root + "ActiveBg",
+                        root + "HoverBg",
+                        root + "DisabledBg",
+                        root + "Bg",
+                        root + "Background",
+                        root + "BgSubtle",
+                    ])
+                else:
+                    # Default Color/Text: match against default Bg first,
+                    # then state bgs (text must be readable on default bg)
+                    candidates.extend([
+                        root + "Bg",
+                        root + "Background",
+                        root + "BgSubtle",
+                        root + "ActiveBg",
+                        root + "HoverBg",
+                        root + "DisabledBg",
+                    ])
                 break
 
         for candidate in candidates:

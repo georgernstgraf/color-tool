@@ -15,8 +15,7 @@ def test_variable_coverage():
     theme_paths = list(Path("bs").glob("*-theme.css"))
     
     if not overrides_path.exists():
-        print("Error: bootstrap-overrides.css not found")
-        return False
+        assert False, "bootstrap-overrides.css not found"
 
     overrides_content = overrides_path.read_text()
     used_vars = set(re.findall(r'--CTBS-[a-zA-Z0-9-]+', overrides_content))
@@ -37,13 +36,14 @@ def test_variable_coverage():
         else:
             print(f"[PASS] {theme_path.name}: All variables present")
             
-    return all_passed
+    assert all_passed, "Some variable coverage checks failed"
 
 def test_actual_theme_contrast():
     print("\n--- ACTUAL THEME CONTRAST TEST ---")
     theme_paths = list(Path("bs").glob("*-theme.css"))
     
     pairs_to_check = [
+        # --- Original pairs ---
         ("--CTBS-BodyColor", "--CTBS-BodyBg", "Body Contrast"),
         ("--CTBS-EmphasisColor", "--CTBS-BodyBg", "Emphasis Contrast"),
         ("--CTBS-PrimaryTextEmphasis", "--CTBS-PrimaryBgSubtle", "Primary Text/Subtle Contrast"),
@@ -55,6 +55,31 @@ def test_actual_theme_contrast():
         ("--CTBS-DarkThemeSuccessTextEmphasis", "--CTBS-DarkThemeSuccessBgSubtle", "Dark Success Text/Subtle Contrast"),
         ("--CTBS-DarkThemeDangerTextEmphasis", "--CTBS-DarkThemeDangerBgSubtle", "Dark Danger Text/Subtle Contrast"),
         ("--CTBS-DarkThemeWarningTextEmphasis", "--CTBS-DarkThemeWarningBgSubtle", "Dark Warning Text/Subtle Contrast"),
+
+        # --- Regression: outline btn default Color vs BodyBg (issue #7 fix 1) ---
+        ("--CTBS-OutlinePrimaryBtnColor", "--CTBS-BodyBg", "Outline Primary Btn vs BodyBg"),
+        ("--CTBS-OutlineSuccessBtnColor", "--CTBS-BodyBg", "Outline Success Btn vs BodyBg"),
+        ("--CTBS-OutlineDangerBtnColor", "--CTBS-BodyBg", "Outline Danger Btn vs BodyBg"),
+        ("--CTBS-OutlineWarningBtnColor", "--CTBS-BodyBg", "Outline Warning Btn vs BodyBg"),
+        ("--CTBS-OutlineInfoBtnColor", "--CTBS-BodyBg", "Outline Info Btn vs BodyBg"),
+
+        # --- Regression: badge/card .text-bg-* text vs role Bg (issue #7 fix 5) ---
+        ("--CTBS-PrimaryBtnColor", "--CTBS-PrimaryBg", "Primary BtnColor vs Bg (text-bg)"),
+        ("--CTBS-SuccessBtnColor", "--CTBS-SuccessBg", "Success BtnColor vs Bg (text-bg)"),
+        ("--CTBS-DangerBtnColor", "--CTBS-DangerBg", "Danger BtnColor vs Bg (text-bg)"),
+        ("--CTBS-WarningBtnColor", "--CTBS-WarningBg", "Warning BtnColor vs Bg (text-bg)"),
+        ("--CTBS-InfoBtnColor", "--CTBS-InfoBg", "Info BtnColor vs Bg (text-bg)"),
+
+        # --- Regression: dark alert TextEmphasis vs BgSubtle (issue #7 fix 2/3) ---
+        ("--CTBS-DarkThemeInfoTextEmphasis", "--CTBS-DarkThemeInfoBgSubtle", "Dark Info Text/Subtle Contrast"),
+
+        # --- Regression: .btn-dark text vs bg (issue #7 fix 9) ---
+        ("--CTBS-DarkBtnColor", "--CTBS-DarkBtnBg", "btn-dark Color vs Bg"),
+
+        # --- Regression: dark outline btn Color vs DarkThemeBodyBg (issue #7 fix 6) ---
+        ("--CTBS-DarkThemeOutlinePrimaryBtnColor", "--CTBS-DarkThemeBodyBg", "Dark Outline Primary vs BodyBg"),
+        ("--CTBS-DarkThemeOutlineDangerBtnColor", "--CTBS-DarkThemeBodyBg", "Dark Outline Danger vs BodyBg"),
+        ("--CTBS-DarkThemeOutlineSuccessBtnColor", "--CTBS-DarkThemeBodyBg", "Dark Outline Success vs BodyBg"),
     ]
     
     all_passed = True
@@ -89,13 +114,10 @@ def test_actual_theme_contrast():
         if theme_passed:
             print(f"  [PASS] All contrast checks passed for {theme_path.name}")
             
-    return all_passed
+    assert all_passed, "Some contrast checks failed"
 
 if __name__ == "__main__":
-    cov_success = test_variable_coverage()
-    contrast_success = test_actual_theme_contrast()
-    
-    if not cov_success or not contrast_success:
-        sys.exit(1)
+    test_variable_coverage()
+    test_actual_theme_contrast()
     print("\nAll tests passed successfully.")
 
