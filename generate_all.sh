@@ -33,4 +33,8 @@ python ColorSim.py img/sommer.jpg --output bs/sommer-theme.css --clusters 12
 echo "   - Lego"
 python ColorSim.py img/bg-lego-lightblue.png --dark-image img/bg-lego-darkblue.png --output bs/lego-theme.css --clusters 12
 
+# Loewe
+echo "   - Loewe"
+python ColorSim.py img/loewe.jpg --output bs/loewe-theme.css --clusters 12
+
 echo "Done!"

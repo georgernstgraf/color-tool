@@ -430,6 +430,181 @@ class BootstrapExtractor:
 
         return get_color_blocks(css_text)
 
+    def accessibility_tail_overrides(self):
+        return """
+
+/* 3. ACCESSIBILITY SAFETY OVERRIDES (AAA-oriented) */
+:root,
+[data-bs-theme=light],
+[data-bs-theme=dark] {
+  --bs-secondary-color: var(--bs-body-color);
+}
+
+.alert {
+  color: var(--bs-body-color) !important;
+  background-color: var(--bs-body-bg) !important;
+  border-color: var(--bs-border-color) !important;
+}
+
+.card {
+  --bs-card-bg: var(--bs-body-bg);
+  background-color: var(--bs-body-bg) !important;
+}
+
+.card,
+.card-body,
+.card-title,
+.card-text,
+.card-header,
+.card-footer {
+  color: var(--bs-body-color) !important;
+}
+
+.card-header,
+.card-footer {
+  background-color: var(--bs-body-color) !important;
+  color: var(--bs-body-bg) !important;
+}
+
+.card-header.text-body-secondary,
+.card-footer.text-body-secondary {
+  color: var(--bs-body-bg) !important;
+}
+
+.card.text-bg-primary,
+.card.text-bg-secondary,
+.card.text-bg-success,
+.card.text-bg-info,
+.card.text-bg-warning,
+.card.text-bg-danger,
+.card.text-bg-light,
+.card.text-bg-dark {
+  background-color: var(--bs-body-color) !important;
+  color: var(--bs-body-bg) !important;
+}
+
+.card.text-bg-primary .card-body,
+.card.text-bg-primary .card-title,
+.card.text-bg-primary .card-text,
+.card.text-bg-primary .card-header,
+.card.text-bg-primary .card-footer,
+.card.text-bg-secondary .card-body,
+.card.text-bg-secondary .card-title,
+.card.text-bg-secondary .card-text,
+.card.text-bg-secondary .card-header,
+.card.text-bg-secondary .card-footer,
+.card.text-bg-success .card-body,
+.card.text-bg-success .card-title,
+.card.text-bg-success .card-text,
+.card.text-bg-success .card-header,
+.card.text-bg-success .card-footer,
+.card.text-bg-info .card-body,
+.card.text-bg-info .card-title,
+.card.text-bg-info .card-text,
+.card.text-bg-info .card-header,
+.card.text-bg-info .card-footer,
+.card.text-bg-warning .card-body,
+.card.text-bg-warning .card-title,
+.card.text-bg-warning .card-text,
+.card.text-bg-warning .card-header,
+.card.text-bg-warning .card-footer,
+.card.text-bg-danger .card-body,
+.card.text-bg-danger .card-title,
+.card.text-bg-danger .card-text,
+.card.text-bg-danger .card-header,
+.card.text-bg-danger .card-footer,
+.card.text-bg-light .card-body,
+.card.text-bg-light .card-title,
+.card.text-bg-light .card-text,
+.card.text-bg-light .card-header,
+.card.text-bg-light .card-footer,
+.card.text-bg-dark .card-body,
+.card.text-bg-dark .card-title,
+.card.text-bg-dark .card-text,
+.card.text-bg-dark .card-header,
+.card.text-bg-dark .card-footer {
+  color: var(--bs-body-bg) !important;
+}
+
+.text-body-secondary,
+.nav-link.disabled,
+.page-link.disabled,
+.page-item.disabled .page-link {
+  color: var(--bs-body-color) !important;
+  opacity: 1;
+}
+
+.nav-pills .nav-link {
+  color: var(--bs-body-color);
+}
+
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+  color: var(--bs-body-bg);
+  background-color: var(--bs-body-color);
+}
+
+[class*="btn-outline-"] {
+  --bs-btn-color: var(--bs-body-color);
+  --bs-btn-border-color: var(--bs-body-color);
+  --bs-btn-hover-color: var(--bs-body-bg);
+  --bs-btn-hover-bg: var(--bs-body-color);
+  --bs-btn-hover-border-color: var(--bs-body-color);
+  --bs-btn-active-color: var(--bs-body-bg);
+  --bs-btn-active-bg: var(--bs-body-color);
+  --bs-btn-active-border-color: var(--bs-body-color);
+}
+
+.btn-dark {
+  --bs-btn-color: var(--bs-body-bg);
+  --bs-btn-bg: var(--bs-body-color);
+  --bs-btn-border-color: var(--bs-body-color);
+  --bs-btn-hover-color: var(--bs-body-bg);
+  --bs-btn-hover-bg: var(--bs-body-color);
+  --bs-btn-hover-border-color: var(--bs-body-color);
+  --bs-btn-active-color: var(--bs-body-bg);
+  --bs-btn-active-bg: var(--bs-body-color);
+  --bs-btn-active-border-color: var(--bs-body-color);
+}
+
+.text-bg-primary,
+.text-bg-secondary,
+.text-bg-success,
+.text-bg-info,
+.text-bg-warning,
+.text-bg-danger,
+.text-bg-light,
+.text-bg-dark,
+.badge,
+.rounded-pill {
+  color: var(--bs-body-bg) !important;
+  background-color: var(--bs-body-color) !important;
+  border-color: var(--bs-body-color) !important;
+}
+
+.pagination .page-link {
+  color: var(--bs-body-color);
+  background-color: var(--bs-body-bg);
+  border-color: var(--bs-border-color);
+}
+
+.pagination .page-item.active .page-link {
+  color: var(--bs-body-bg);
+  background-color: var(--bs-body-color);
+  border-color: var(--bs-body-color);
+}
+
+.pagination .page-item.disabled .page-link {
+  color: var(--bs-body-color) !important;
+  background-color: var(--bs-body-bg);
+  opacity: 1;
+}
+
+.text-success {
+  color: var(--bs-body-color) !important;
+}
+"""
+
 def main():
     parser = argparse.ArgumentParser(description="Extract color data from Bootstrap CSS into semantic variable and override files")
     parser.add_argument("-i", "--input", default="bs/bootstrap-5.3.8.css", help="Input Bootstrap CSS file")
@@ -483,6 +658,7 @@ def main():
         if overrides:
             f.write("/* 2. COMPONENT-SPECIFIC OVERRIDES */\n")
             f.write(overrides)
+        f.write(extractor.accessibility_tail_overrides())
         
     print(f"Success!")
     print(f"  Variables written to: {args.vars}")

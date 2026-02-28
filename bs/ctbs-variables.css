@@ -340,9 +340,9 @@
   --CTBS-FormValidBorderColorRgb: 25, 135, 84;
   --CTBS-FormValidColor: #198754;
   --CTBS-FormValidColorRgb: 25, 135, 84;
-  --CTBS-Gradient-1: rgba(255, 255, 255, 0);
+  --CTBS-Gradient-1: rgba(255, 255, 255, 0.15);
   --CTBS-Gradient-1Rgb: 255, 255, 255;
-  --CTBS-Gradient: rgba(255, 255, 255, 0.15);
+  --CTBS-Gradient: rgba(255, 255, 255, 0);
   --CTBS-GradientRgb: 255, 255, 255;
   --CTBS-Gray100: #f8f9fa;
   --CTBS-Gray100Rgb: 248, 249, 250;
