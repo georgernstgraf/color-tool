@@ -513,23 +513,143 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
         if is_rgb: return f"{rgb[0]}, {rgb[1]}, {rgb[2]}"
         return rgb_to_hex(rgb)
 
+    def parse_rgb_string(value: str) -> tuple[int, int, int] | None:
+        value = value.strip()
+        if value.startswith("#") and len(value) == 7:
+            return hex_to_rgb(value)
+        m = re.match(r"rgba?\(([^)]+)\)", value)
+        if not m:
+            return None
+        parts = [p.strip() for p in m.group(1).split(",")]
+        if len(parts) < 3:
+            return None
+        return (int(float(parts[0])), int(float(parts[1])), int(float(parts[2])))
+
+    def background_pair_for(var_name: str, generated_rgb: dict[str, tuple[int, int, int]]) -> tuple[int, int, int] | None:
+        base = var_name.replace("--CTBS-", "")
+        candidates = []
+        if "TextEmphasis" in base:
+            candidates.append(base.replace("TextEmphasis", "BgSubtle"))
+        for suffix in ["ActiveColor", "HoverColor", "DisabledColor", "Color", "Text"]:
+            if base.endswith(suffix):
+                root = base[:-len(suffix)]
+                candidates.extend([
+                    root + "ActiveBg",
+                    root + "HoverBg",
+                    root + "DisabledBg",
+                    root + "Bg",
+                    root + "Background",
+                    root + "BgSubtle",
+                ])
+                break
+
+        for candidate in candidates:
+            key = "--CTBS-" + candidate
+            if key in generated_rgb:
+                return generated_rgb[key]
+
+        dark = "DarkTheme" in base
+        fallback_keys = [
+            "--CTBS-DarkThemeCardBg" if dark else "--CTBS-CardBg",
+            "--CTBS-DarkThemeBodyBg" if dark else "--CTBS-BodyBg",
+            "--CTBS-BodyBg",
+        ]
+        for key in fallback_keys:
+            if key in generated_rgb:
+                return generated_rgb[key]
+        return None
+
+    def has_text_semantics(var_name: str) -> bool:
+        if var_name.endswith("Rgb"):
+            return False
+        base = var_name.replace("--CTBS-", "")
+        if "Bg" in base or "Background" in base:
+            return False
+        return any(token in base for token in ["Color", "Text", "Link", "Emphasis"]) and "Shadow" not in base
+
+    def has_bg_semantics(var_name: str) -> bool:
+        if var_name.endswith("Rgb"):
+            return False
+        base = var_name.replace("--CTBS-", "")
+        return ("Bg" in base or "Background" in base) and "BodyBg" not in base
+
+    def make_text_aaa_compatible(generated_rgb: dict[str, tuple[int, int, int]]):
+        for var_name in list(generated_rgb.keys()):
+            if not has_bg_semantics(var_name):
+                continue
+            bg = generated_rgb[var_name]
+            lum = get_luminance(bg)
+            if 0.10 < lum < 0.30:
+                h, s, l = rgb_to_hsl(bg)
+                if "DarkTheme" in var_name:
+                    generated_rgb[var_name] = hsl_to_rgb((h, s, min(l, 8)))
+                else:
+                    generated_rgb[var_name] = hsl_to_rgb((h, s, max(l, 45)))
+
+        for var_name in list(generated_rgb.keys()):
+            if not has_text_semantics(var_name):
+                continue
+            bg = background_pair_for(var_name, generated_rgb)
+            if bg is None:
+                continue
+            generated_rgb[var_name] = ensure_contrast_ratio(generated_rgb[var_name], bg, 7.0)
+
+        for var_name in list(generated_rgb.keys()):
+            if not has_text_semantics(var_name):
+                continue
+            bg = background_pair_for(var_name, generated_rgb)
+            if bg is None:
+                continue
+            if contrast_ratio(generated_rgb[var_name], bg) < 7.0:
+                generated_rgb[var_name] = ensure_contrast(bg, 7.0)
+
     lines = ["/* GENERATED COLOR VARIABLES */", "/* Source: image */", "", ":root {"]
     if ctbs_vars:
         lines.append("    /* === CTBS SEMANTIC VARIABLES === */")
         unique_vars = sorted(list(set(ctbs_vars)))
         unique_vars = [v for v in unique_vars if "Glass" not in v]
+        base_vars = [v for v in unique_vars if not v.endswith("Rgb")]
+        generated_raw: dict[str, str] = {}
+        generated_rgb: dict[str, tuple[int, int, int]] = {}
+
+        for var in base_vars:
+            val = get_ctbs_color(var)
+            generated_raw[var] = val
+            parsed = parse_rgb_string(val)
+            if parsed is not None:
+                generated_rgb[var] = parsed
+
+        make_text_aaa_compatible(generated_rgb)
+
         processed_vars = set()
         for var in unique_vars:
-            if var in processed_vars: continue
-            val = get_ctbs_color(var)
-            lines.append(f"    {var}: {val};")
+            if var in processed_vars:
+                continue
+
+            if var.endswith("Rgb"):
+                base_var = var[:-3]
+                if base_var in generated_rgb:
+                    rgb = generated_rgb[base_var]
+                    lines.append(f"    {var}: {rgb[0]}, {rgb[1]}, {rgb[2]};")
+                else:
+                    lines.append(f"    {var}: {get_ctbs_color(var)};")
+                processed_vars.add(var)
+                continue
+
+            if var in generated_rgb:
+                lines.append(f"    {var}: {rgb_to_hex(generated_rgb[var])};")
+            else:
+                lines.append(f"    {var}: {generated_raw.get(var, get_ctbs_color(var))};")
             processed_vars.add(var)
-            if not var.endswith("Rgb"):
-                rgb_var = var + "Rgb"
-                if rgb_var not in processed_vars:
-                    rgb_val = get_ctbs_color(rgb_var)
-                    lines.append(f"    {rgb_var}: {rgb_val};")
-                    processed_vars.add(rgb_var)
+
+            rgb_var = var + "Rgb"
+            if rgb_var not in processed_vars:
+                if var in generated_rgb:
+                    rgb = generated_rgb[var]
+                    lines.append(f"    {rgb_var}: {rgb[0]}, {rgb[1]}, {rgb[2]};")
+                else:
+                    lines.append(f"    {rgb_var}: {get_ctbs_color(rgb_var)};")
+                processed_vars.add(rgb_var)
     else:
         lines.append("    /* === THEME COLORS === */")
         for name, rgb in full_light_map.items():

@@ -155,6 +155,19 @@ To run the focused active-pill visibility check, run:
 python -m pytest -q test_browser_wcag.py -k active_pill
 ```
 
+For the standalone browser WCAG tool (with optional per-element logging), run:
+
+```bash
+python browser_wcag_tool.py
+python browser_wcag_tool.py --verbose
+```
+
+With `-v/--verbose`, the tool logs each checked text element with theme and mode context, for example:
+
+```text
+Autumn, Day, "Primary", Button, Outline
+```
+
 ## Example Workflow
 
 ```bash

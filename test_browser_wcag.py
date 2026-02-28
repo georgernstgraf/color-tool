@@ -193,6 +193,7 @@ def test_rendered_wcag_contrast(preview_url):
                     "mode => document.documentElement.getAttribute('data-bs-theme') === mode",
                     arg=mode,
                 )
+                page.wait_for_timeout(180)
                 yield theme, mode
 
     with sync_playwright() as pw:
@@ -214,6 +215,11 @@ def test_rendered_wcag_contrast(preview_url):
         page.evaluate(
             """
             () => {
+              const motion = document.createElement('style');
+              motion.id = 'test-disable-motion';
+              motion.innerHTML = '* { transition: none !important; animation: none !important; }';
+              document.head.appendChild(motion);
+
               const style = document.createElement('style');
               style.id = 'test-no-bg-image';
               style.innerHTML = 'body::before { background-image: none !important; }';
@@ -224,7 +230,6 @@ def test_rendered_wcag_contrast(preview_url):
         )
 
         for theme, mode in iterate_theme_modes(page):
-            page.wait_for_timeout(80)
             failures = page.evaluate(
                 audit_script,
                 {"normalTextMin": normal_text_min, "largeTextMin": large_text_min},
@@ -367,6 +372,16 @@ def test_active_pill_is_contrast_compliant(preview_url):
 
         page = browser.new_page(viewport={"width": 1440, "height": 2200})
         page.goto(preview_url, wait_until="networkidle")
+        page.evaluate(
+            """
+            () => {
+              const motion = document.createElement('style');
+              motion.id = 'test-disable-motion';
+              motion.innerHTML = '* { transition: none !important; animation: none !important; }';
+              document.head.appendChild(motion);
+            }
+            """
+        )
 
         themes = page.eval_on_selector_all("#themeSelect option", "opts => opts.map(o => o.value)")
         for theme in themes:
@@ -390,6 +405,7 @@ def test_active_pill_is_contrast_compliant(preview_url):
                     "mode => document.documentElement.getAttribute('data-bs-theme') === mode",
                     arg=mode,
                 )
+                page.wait_for_timeout(180)
                 ratio = page.evaluate(contrast_for_selector_script, "#pills-home-tab")
                 if ratio is None:
                     issues.append(f"{theme}/{mode}: #pills-home-tab not found")
