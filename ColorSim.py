@@ -588,6 +588,18 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
             if key in generated_rgb:
                 return generated_rgb[key]
 
+        # For {prefix}BtnColor with no matching BtnBg, try the base role color.
+        # E.g. DarkThemePrimaryBtnColor -> DarkThemePrimary (the role bg used by badges).
+        if "Btn" in base and any(base.endswith(s) for s in ["Color", "HoverColor", "ActiveColor", "DisabledColor"]):
+            roles = ["Primary", "Secondary", "Success", "Info", "Warning", "Danger", "Light", "Dark"]
+            for role in roles:
+                if role + "Btn" in base:
+                    prefix = base[:base.index(role + "Btn")]
+                    role_key = f"--CTBS-{prefix}{role}"
+                    if role_key in generated_rgb:
+                        return generated_rgb[role_key]
+                    break
+
         dark = "DarkTheme" in base
         fallback_keys = [
             "--CTBS-DarkThemeCardBg" if dark else "--CTBS-CardBg",

@@ -308,10 +308,33 @@ class BootstrapExtractor:
             # Inject high-contrast overrides that Bootstrap might set to 'inherit' or static values
             var_lines.append("  --bs-heading-color: var(--CTBS-EmphasisColor);")
             var_lines.append("  --bs-emphasis-color: var(--CTBS-EmphasisColor);")
+
+            # Register synthetic DarkTheme{Role} + DarkTheme{Role}Rgb variables.
+            # Bootstrap doesn't define --bs-primary etc. in [data-bs-theme=dark], but .text-bg-*
+            # helpers still reference --bs-{role}-rgb, so we need themed dark-mode base-role vars.
+            # The fallback values here are the original Bootstrap defaults; ColorSim overrides them.
+            bs_role_defaults = {
+                "Primary": "13, 110, 253",
+                "Secondary": "108, 117, 125",
+                "Success": "25, 135, 84",
+                "Info": "13, 202, 240",
+                "Warning": "255, 193, 7",
+                "Danger": "220, 53, 69",
+                "Light": "248, 249, 250",
+                "Dark": "33, 37, 41",
+            }
+            for role, default_rgb in bs_role_defaults.items():
+                var_base = f"--CTBS-DarkTheme{role}"
+                r, g, b = [int(x.strip()) for x in default_rgb.split(",")]
+                self.var_definitions.append(f"  {var_base}: #{r:02x}{g:02x}{b:02x};")
+                self.var_definitions.append(f"  {var_base}Rgb: {default_rgb};")
+
             return ":root {\n" + "\n".join(var_lines) + "\n}"
         return ""
 
     def extract_overrides(self, css_text):
+        dark_role_rgb_injected = [False]  # mutable flag for nested function
+
         def get_color_blocks(text, indent=""):
             res = []
             i = 0
@@ -344,10 +367,17 @@ class BootstrapExtractor:
                     
                     color_lines = []
                     
-                    # Inject dynamic overrides for specific selectors
-                    if selector == "[data-bs-theme=dark]":
+                    # Inject dynamic overrides for specific selectors (once only)
+                    if selector == "[data-bs-theme=dark]" and not dark_role_rgb_injected[0]:
+                        dark_role_rgb_injected[0] = True
                         color_lines.append(f"{indent}  --bs-heading-color: var(--CTBS-DarkThemeEmphasisColor);")
                         color_lines.append(f"{indent}  --bs-emphasis-color: var(--CTBS-DarkThemeEmphasisColor);")
+                        # Override --bs-{role}-rgb globally so .text-{role}, .bg-{role},
+                        # .text-bg-{role}, .border-{role} all use dark-mode role colors
+                        for role, rl in [("Primary","primary"),("Secondary","secondary"),("Success","success"),
+                                         ("Info","info"),("Warning","warning"),("Danger","danger"),
+                                         ("Light","light"),("Dark","dark")]:
+                            color_lines.append(f"{indent}  --bs-{rl}-rgb: var(--CTBS-DarkTheme{role}Rgb);")
 
                     for prop_line in properties:
                         prop_line = prop_line.strip()
@@ -410,6 +440,34 @@ class BootstrapExtractor:
                     if color_lines:
                         res.append(f"{indent}{selector} {{\n" + "\n".join(color_lines) + f"\n{indent}}}")
                         
+                        # Inject Dark Mode overrides for glass selectors
+                        # so backgrounds switch to DarkTheme* variants
+                        is_glass_selector = any(gs in selector for gs in self.glass_selectors)
+                        is_dark_already = "data-bs-theme=dark" in selector
+                        if is_glass_selector and not is_dark_already and not selector.startswith("@"):
+                            dark_lines = []
+                            for cl in color_lines:
+                                # Replace --CTBS-XyzRgb with --CTBS-DarkThemeXyzRgb in glass bg rules
+                                if "--CTBS-" in cl and "Rgb" in cl and "DarkTheme" not in cl:
+                                    dark_cl = re.sub(
+                                        r'--CTBS-([A-Za-z0-9]+)Rgb',
+                                        r'--CTBS-DarkTheme\1Rgb',
+                                        cl
+                                    )
+                                    dark_lines.append(dark_cl)
+                                elif "backdrop-filter" in cl:
+                                    dark_lines.append(cl)
+                                # Also handle --bs-card-bg with CTBS vars
+                                elif "--bs-card-bg" in cl and "--CTBS-" in cl and "DarkTheme" not in cl:
+                                    dark_cl = re.sub(
+                                        r'--CTBS-([A-Za-z0-9]+)Rgb',
+                                        r'--CTBS-DarkTheme\1Rgb',
+                                        cl
+                                    )
+                                    dark_lines.append(dark_cl)
+                            if dark_lines:
+                                res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n" + "\n".join(dark_lines) + f"\n{indent}}}")
+
                         # Inject Dark Mode overrides for alerts using themed CTBS variables
                         if ".alert-" in selector and not selector.startswith("@"):
                             role_map = {
@@ -448,7 +506,7 @@ class BootstrapExtractor:
             )
         text_bg_light = "\n".join(text_bg_lines)
 
-        # Dark-mode .text-bg-* use DarkTheme variants
+        # Dark-mode .text-bg-* use DarkTheme variants for text color
         text_bg_dark_lines = []
         for role, rl in zip(roles, role_lower):
             text_bg_dark_lines.append(

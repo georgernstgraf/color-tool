@@ -80,6 +80,16 @@ def test_actual_theme_contrast():
         ("--CTBS-DarkThemeOutlinePrimaryBtnColor", "--CTBS-DarkThemeBodyBg", "Dark Outline Primary vs BodyBg"),
         ("--CTBS-DarkThemeOutlineDangerBtnColor", "--CTBS-DarkThemeBodyBg", "Dark Outline Danger vs BodyBg"),
         ("--CTBS-DarkThemeOutlineSuccessBtnColor", "--CTBS-DarkThemeBodyBg", "Dark Outline Success vs BodyBg"),
+
+        # --- Regression: dark badge .text-bg-* text vs DarkTheme{Role} bg (issue #7 fix 11) ---
+        ("--CTBS-DarkThemePrimaryBtnColor", "--CTBS-DarkThemePrimary", "Dark Badge Primary BtnColor vs Role"),
+        ("--CTBS-DarkThemeSecondaryBtnColor", "--CTBS-DarkThemeSecondary", "Dark Badge Secondary BtnColor vs Role"),
+        ("--CTBS-DarkThemeSuccessBtnColor", "--CTBS-DarkThemeSuccess", "Dark Badge Success BtnColor vs Role"),
+        ("--CTBS-DarkThemeInfoBtnColor", "--CTBS-DarkThemeInfo", "Dark Badge Info BtnColor vs Role"),
+        ("--CTBS-DarkThemeWarningBtnColor", "--CTBS-DarkThemeWarning", "Dark Badge Warning BtnColor vs Role"),
+        ("--CTBS-DarkThemeDangerBtnColor", "--CTBS-DarkThemeDanger", "Dark Badge Danger BtnColor vs Role"),
+        ("--CTBS-DarkThemeLightBtnColor", "--CTBS-DarkThemeLight", "Dark Badge Light BtnColor vs Role"),
+        ("--CTBS-DarkThemeDarkBtnColor", "--CTBS-DarkThemeDark", "Dark Badge Dark BtnColor vs Role"),
     ]
     
     all_passed = True

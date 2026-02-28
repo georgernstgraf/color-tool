@@ -174,6 +174,12 @@ def run(url: str, verbose: bool) -> list[str]:
         page.evaluate(
             """
             () => {
+              const opacityRange = document.getElementById('opacityRange');
+              if (opacityRange) {
+                opacityRange.value = opacityRange.max || '1';
+                opacityRange.dispatchEvent(new Event('input', { bubbles: true }));
+              }
+
               const motion = document.createElement('style');
               motion.innerHTML = '* { transition: none !important; animation: none !important; }';
               document.head.appendChild(motion);
