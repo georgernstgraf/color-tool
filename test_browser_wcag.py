@@ -215,6 +215,12 @@ def test_rendered_wcag_contrast(preview_url):
         page.evaluate(
             """
             () => {
+              const opacityRange = document.getElementById('opacityRange');
+              if (opacityRange) {
+                opacityRange.value = opacityRange.max || '1';
+                opacityRange.dispatchEvent(new Event('input', { bubbles: true }));
+              }
+
               const motion = document.createElement('style');
               motion.id = 'test-disable-motion';
               motion.innerHTML = '* { transition: none !important; animation: none !important; }';
@@ -258,6 +264,17 @@ def test_can_click_through_theme_and_mode_controls(preview_url):
 
         page = browser.new_page(viewport={"width": 1440, "height": 2200})
         page.goto(preview_url, wait_until="networkidle")
+        page.evaluate(
+            """
+            () => {
+              const opacityRange = document.getElementById('opacityRange');
+              if (opacityRange) {
+                opacityRange.value = opacityRange.max || '1';
+                opacityRange.dispatchEvent(new Event('input', { bubbles: true }));
+              }
+            }
+            """
+        )
 
         themes = page.eval_on_selector_all("#themeSelect option", "opts => opts.map(o => o.value)")
         assert themes, "No themes found in #themeSelect"
@@ -372,6 +389,17 @@ def test_active_pill_is_contrast_compliant(preview_url):
 
         page = browser.new_page(viewport={"width": 1440, "height": 2200})
         page.goto(preview_url, wait_until="networkidle")
+        page.evaluate(
+            """
+            () => {
+              const opacityRange = document.getElementById('opacityRange');
+              if (opacityRange) {
+                opacityRange.value = opacityRange.max || '1';
+                opacityRange.dispatchEvent(new Event('input', { bubbles: true }));
+              }
+            }
+            """
+        )
         page.evaluate(
             """
             () => {
