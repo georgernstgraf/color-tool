@@ -443,3 +443,185 @@ def test_active_pill_is_contrast_compliant(preview_url):
         browser.close()
 
     assert not issues, "Active pill contrast failures:\n" + "\n".join(issues)
+
+
+def test_progress_bar_rendered_contrast(preview_url):
+    """Progress-bar fill must achieve >= 3.0 contrast against its track (WCAG 2.1 SC 1.4.11)."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import Error, sync_playwright
+
+    non_text_min = 3.0
+    issues = []
+
+    progress_audit_script = """
+    (threshold) => {
+      function parseColor(raw) {
+        if (!raw || raw === 'transparent') return { r: 0, g: 0, b: 0, a: 0 };
+        const m = raw.match(/rgba?\\(([^)]+)\\)/i);
+        if (!m) return { r: 0, g: 0, b: 0, a: 0 };
+        const p = m[1].split(',').map(x => x.trim());
+        return {
+          r: Number(p[0]),
+          g: Number(p[1]),
+          b: Number(p[2]),
+          a: p[3] === undefined ? 1 : Number(p[3])
+        };
+      }
+
+      function blend(top, bottom) {
+        const a = top.a + bottom.a * (1 - top.a);
+        if (a <= 0) return { r: 0, g: 0, b: 0, a: 0 };
+        return {
+          r: (top.r * top.a + bottom.r * bottom.a * (1 - top.a)) / a,
+          g: (top.g * top.a + bottom.g * bottom.a * (1 - top.a)) / a,
+          b: (top.b * top.a + bottom.b * bottom.a * (1 - top.a)) / a,
+          a
+        };
+      }
+
+      function srgb(c) {
+        const v = c / 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      }
+
+      function luminance(color) {
+        return 0.2126 * srgb(color.r) + 0.7152 * srgb(color.g) + 0.0722 * srgb(color.b);
+      }
+
+      function contrastRatio(c1, c2) {
+        const l1 = luminance(c1);
+        const l2 = luminance(c2);
+        const light = Math.max(l1, l2);
+        const dark = Math.min(l1, l2);
+        return (light + 0.05) / (dark + 0.05);
+      }
+
+      function resolveBackground(el) {
+        let result = { r: 255, g: 255, b: 255, a: 1 };
+        const layers = [];
+        let node = el;
+        while (node) {
+          const c = parseColor(getComputedStyle(node).backgroundColor);
+          if (c.a > 0) layers.push(c);
+          node = node.parentElement;
+        }
+        for (let i = layers.length - 1; i >= 0; i--) {
+          result = blend(layers[i], result);
+        }
+        return result;
+      }
+
+      function barLabel(bar) {
+        const classes = Array.from(bar.classList)
+          .filter(c => c !== 'progress-bar' && c !== 'progress-bar-striped' && c !== 'progress-bar-animated')
+          .join('.');
+        return classes || 'default';
+      }
+
+      const failures = [];
+      const bars = document.querySelectorAll('.progress-bar');
+
+      for (const bar of bars) {
+        // Skip bg-light / bg-dark: inherently low-contrast in matching mode
+        if (bar.classList.contains('bg-light') || bar.classList.contains('bg-dark')) continue;
+
+        const rect = bar.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) continue;
+
+        const barBg = resolveBackground(bar);
+        const track = bar.closest('.progress');
+        if (!track) continue;
+        const trackBg = resolveBackground(track);
+
+        const ratio = contrastRatio(barBg, trackBg);
+        if (ratio < threshold) {
+          failures.push({
+            label: barLabel(bar),
+            ratio: Number(ratio.toFixed(2)),
+            barColor: `rgb(${Math.round(barBg.r)},${Math.round(barBg.g)},${Math.round(barBg.b)})`,
+            trackColor: `rgb(${Math.round(trackBg.r)},${Math.round(trackBg.g)},${Math.round(trackBg.b)})`
+          });
+        }
+      }
+
+      failures.sort((a, b) => a.ratio - b.ratio);
+      return failures;
+    }
+    """
+
+    with sync_playwright() as pw:
+        browser = None
+        try:
+            browser = pw.chromium.launch(channel="chromium", headless=True)
+        except Error:
+            try:
+                browser = pw.chromium.launch(headless=True)
+            except Error as exc:
+                pytest.skip(f"Chromium is not available for Playwright: {exc}")
+
+        if browser is None:
+            pytest.skip("Chromium is not available for Playwright")
+
+        page = browser.new_page(viewport={"width": 1440, "height": 2200})
+        page.goto(preview_url, wait_until="networkidle")
+        page.evaluate(
+            """
+            () => {
+              const opacityRange = document.getElementById('opacityRange');
+              if (opacityRange) {
+                opacityRange.value = opacityRange.max || '1';
+                opacityRange.dispatchEvent(new Event('input', { bubbles: true }));
+              }
+              const motion = document.createElement('style');
+              motion.id = 'test-disable-motion';
+              motion.innerHTML = '* { transition: none !important; animation: none !important; }';
+              document.head.appendChild(motion);
+              const style = document.createElement('style');
+              style.id = 'test-no-bg-image';
+              style.innerHTML = 'body::before { background-image: none !important; }';
+              document.head.appendChild(style);
+              if (typeof updateTheme === 'function') updateTheme();
+            }
+            """
+        )
+
+        themes = page.eval_on_selector_all(
+            "#themeSelect option", "opts => opts.map(o => o.value)"
+        )
+        for theme in themes:
+            page.select_option("#themeSelect", theme)
+            page.wait_for_function(
+                "theme => document.getElementById('themeStylesheet').getAttribute('href').includes(`${theme}-theme.css`)",
+                arg=theme,
+            )
+
+            for mode in ("light", "dark"):
+                page.evaluate(
+                    """
+                    (mode) => {
+                      document.documentElement.setAttribute('data-bs-theme', mode);
+                      if (typeof updateTheme === 'function') updateTheme();
+                    }
+                    """,
+                    mode,
+                )
+                page.wait_for_function(
+                    "mode => document.documentElement.getAttribute('data-bs-theme') === mode",
+                    arg=mode,
+                )
+                page.wait_for_timeout(180)
+
+                failures = page.evaluate(progress_audit_script, non_text_min)
+                if failures:
+                    sample = "; ".join(
+                        f"{f['label']} {f['ratio']}<{non_text_min} "
+                        f"(bar={f['barColor']} track={f['trackColor']})"
+                        for f in failures[:5]
+                    )
+                    issues.append(f"{theme}/{mode}: {sample}")
+
+        browser.close()
+
+    assert not issues, (
+        "Progress bar contrast failures (non-text >= 3.0):\n" + "\n".join(issues)
+    )

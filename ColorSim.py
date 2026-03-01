@@ -392,6 +392,17 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
             current_body_bg = full_light_map["Dark"]
             current_body_color = full_light_map["Light"]
         
+        # Progress bar: fill uses Primary, text contrasts against fill
+        if search_name.startswith("ProgressBar"):
+            bar_bg = use_map.get("Primary", (13, 110, 253))
+            bar_bg = ensure_contrast_ratio(bar_bg, current_body_bg, 3.0)
+            if "Color" in search_name:
+                rgb = ensure_contrast(bar_bg, 7.0)
+            else:
+                rgb = bar_bg
+            if is_rgb: return f"{rgb[0]}, {rgb[1]}, {rgb[2]}"
+            return rgb_to_hex(rgb)
+
         # Determine if we are in a component that might be placed on BodyBg or a component background
         is_alert = "Alert" in search_name
         is_outline_btn = "Outline" in search_name and "Btn" in search_name
