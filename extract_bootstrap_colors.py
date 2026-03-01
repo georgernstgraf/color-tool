@@ -52,61 +52,49 @@ class BootstrapExtractor:
         capitalized_parts = [p.capitalize() for p in parts]
         return f"--CTBS-{''.join(capitalized_parts)}"
 
+    # Selector pattern -> (regex, suffix) for contextual name extraction
+    _SELECTOR_PATTERNS = [
+        (".btn-",             r'\.btn-([a-z0-9-]+)',             "Btn"),
+        (".table-",           r'\.table-([a-z0-9-]+)',           "Table"),
+        (".alert-",           r'\.alert-([a-z0-9-]+)',           "Alert"),
+        (".badge-",           r'\.badge-([a-z0-9-]+)',           "Badge"),
+        (".list-group-item-", r'\.list-group-item-([a-z0-9-]+)', "ListGroupItem"),
+        (".navbar-",          r'\.navbar-([a-z0-9-]+)',          "Navbar"),
+        (".nav-",             r'\.nav-([a-z0-9-]+)',             "Nav"),
+    ]
+    # Literal selector -> fixed name (no regex needed)
+    _SELECTOR_LITERALS = {
+        "data-bs-theme=dark": "DarkTheme",
+        ".form-control":      "FormControl",
+        ".form-check-input":  "FormCheckInput",
+        ".dropdown-item":     "DropdownItem",
+    }
+    # Prefixes stripped from property names before PascalCase conversion
+    _PROP_STRIP = ["--bs-", "btn-", "table-", "alert-", "badge-", "list-group-item-", "navbar-", "nav-"]
+
     def get_contextual_name(self, selector, prop):
         """Generate a semantic name from CSS context."""
         if not selector or not prop:
             return None
-            
-        # Clean selector
-        # .btn-primary -> PrimaryBtn
-        # .table-success -> SuccessTable
-        # [data-bs-theme=dark] -> DarkTheme
+
         sel_name = ""
-        if ".btn-" in selector:
-            match = re.search(r'\.btn-([a-z0-9-]+)', selector)
-            if match:
-                sel_name = "".join([p.capitalize() for p in match.group(1).split('-')]) + "Btn"
-        elif ".table-" in selector:
-            match = re.search(r'\.table-([a-z0-9-]+)', selector)
-            if match:
-                sel_name = "".join([p.capitalize() for p in match.group(1).split('-')]) + "Table"
-        elif ".alert-" in selector:
-            match = re.search(r'\.alert-([a-z0-9-]+)', selector)
-            if match:
-                sel_name = "".join([p.capitalize() for p in match.group(1).split('-')]) + "Alert"
-        elif ".badge-" in selector:
-            match = re.search(r'\.badge-([a-z0-9-]+)', selector)
-            if match:
-                sel_name = "".join([p.capitalize() for p in match.group(1).split('-')]) + "Badge"
-        elif ".list-group-item-" in selector:
-            match = re.search(r'\.list-group-item-([a-z0-9-]+)', selector)
-            if match:
-                sel_name = "".join([p.capitalize() for p in match.group(1).split('-')]) + "ListGroupItem"
-        elif ".navbar-" in selector:
-            match = re.search(r'\.navbar-([a-z0-9-]+)', selector)
-            if match:
-                sel_name = "".join([p.capitalize() for p in match.group(1).split('-')]) + "Navbar"
-        elif ".nav-" in selector:
-            match = re.search(r'\.nav-([a-z0-9-]+)', selector)
-            if match:
-                sel_name = "".join([p.capitalize() for p in match.group(1).split('-')]) + "Nav"
-        elif "data-bs-theme=dark" in selector:
-            sel_name = "DarkTheme"
-        elif ".form-control" in selector:
-            sel_name = "FormControl"
-        elif ".form-check-input" in selector:
-            sel_name = "FormCheckInput"
-        elif ".dropdown-item" in selector:
-            sel_name = "DropdownItem"
-            
-        # Clean property
-        # --bs-btn-hover-bg -> HoverBg
-        # --bs-table-striped-bg -> StripedBg
-        # border-color -> BorderColor
-        prop_name = prop.replace("--bs-", "").replace("btn-", "").replace("table-", "").replace("alert-", "").replace("badge-", "").replace("list-group-item-", "").replace("navbar-", "").replace("nav-", "")
-        prop_parts = [p.capitalize() for p in prop_name.split('-')]
-        prop_name = "".join(prop_parts)
-        
+        for prefix, regex, suffix in self._SELECTOR_PATTERNS:
+            if prefix in selector:
+                m = re.search(regex, selector)
+                if m:
+                    sel_name = "".join(p.capitalize() for p in m.group(1).split('-')) + suffix
+                break
+        if not sel_name:
+            for literal, name in self._SELECTOR_LITERALS.items():
+                if literal in selector:
+                    sel_name = name
+                    break
+
+        prop_name = prop
+        for strip in self._PROP_STRIP:
+            prop_name = prop_name.replace(strip, "")
+        prop_name = "".join(p.capitalize() for p in prop_name.split('-'))
+
         if sel_name:
             return f"{sel_name}{prop_name}"
         return prop_name
@@ -436,7 +424,6 @@ class BootstrapExtractor:
                                     else:
                                         color_lines.append(f"{indent}  {prop}: {val};")
                                         color_lines.append(f"{indent}  backdrop-filter: blur(var(--CTBS-GlassBlur));")
-                    
                     if color_lines:
                         res.append(f"{indent}{selector} {{\n" + "\n".join(color_lines) + f"\n{indent}}}")
                         
@@ -483,36 +470,31 @@ class BootstrapExtractor:
                                     dark_rule_lines = [
                                         f"{indent}  --bs-alert-color: var(--CTBS-DarkTheme{role}TextEmphasis);",
                                         f"{indent}  --bs-alert-link-color: var(--CTBS-DarkTheme{role}TextEmphasis);",
-                                        f"{indent}  --bs-alert-bg: rgba(var(--CTBS-DarkTheme{role}BgSubtleRgb), var(--CTBS-GlassOpacity));",
+                                         f"{indent}  --bs-alert-bg: rgba(var(--CTBS-DarkTheme{role}BgSubtleRgb), var(--CTBS-GlassOpacity));",
                                         f"{indent}  backdrop-filter: blur(var(--CTBS-GlassBlur));",
                                     ]
                                     res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n" + "\n".join(dark_rule_lines) + f"\n{indent}}}")
                                     break
 
                         # Inject Dark Mode overrides for contextual tables
+                        _TABLE_PROPS = [
+                            ("color", "Color"), ("bg", "Bg"), ("border-color", "BorderColor"),
+                            ("striped-bg", "StripedBg"), ("striped-color", "StripedColor"),
+                            ("active-bg", "ActiveBg"), ("active-color", "ActiveColor"),
+                            ("hover-bg", "HoverBg"), ("hover-color", "HoverColor"),
+                        ]
                         if ".table-" in selector and not selector.startswith("@") and "data-bs-theme=dark" not in selector:
                             table_role_map = {
-                                ".table-primary": "Primary",
-                                ".table-secondary": "Secondary",
-                                ".table-success": "Success",
-                                ".table-info": "Info",
-                                ".table-warning": "Warning",
-                                ".table-danger": "Danger",
-                                ".table-light": "Light",
-                                ".table-dark": "Dark",
+                                ".table-primary": "Primary", ".table-secondary": "Secondary",
+                                ".table-success": "Success", ".table-info": "Info",
+                                ".table-warning": "Warning", ".table-danger": "Danger",
+                                ".table-light": "Light", ".table-dark": "Dark",
                             }
                             for table_sel, role in table_role_map.items():
                                 if table_sel in selector:
                                     dark_rule_lines = [
-                                        f"{indent}  --bs-table-color: var(--CTBS-DarkTheme{role}TableColor);",
-                                        f"{indent}  --bs-table-bg: var(--CTBS-DarkTheme{role}TableBg);",
-                                        f"{indent}  --bs-table-border-color: var(--CTBS-DarkTheme{role}TableBorderColor);",
-                                        f"{indent}  --bs-table-striped-bg: var(--CTBS-DarkTheme{role}TableStripedBg);",
-                                        f"{indent}  --bs-table-striped-color: var(--CTBS-DarkTheme{role}TableStripedColor);",
-                                        f"{indent}  --bs-table-active-bg: var(--CTBS-DarkTheme{role}TableActiveBg);",
-                                        f"{indent}  --bs-table-active-color: var(--CTBS-DarkTheme{role}TableActiveColor);",
-                                        f"{indent}  --bs-table-hover-bg: var(--CTBS-DarkTheme{role}TableHoverBg);",
-                                        f"{indent}  --bs-table-hover-color: var(--CTBS-DarkTheme{role}TableHoverColor);",
+                                        f"{indent}  --bs-table-{css}: var(--CTBS-DarkTheme{role}Table{suffix});"
+                                        for css, suffix in _TABLE_PROPS
                                     ]
                                     res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n" + "\n".join(dark_rule_lines) + f"\n{indent}}}")
                                     break
@@ -559,21 +541,17 @@ class BootstrapExtractor:
         # --- Dark-mode outline button overrides ---
         # Outline buttons exclude Light/Dark variants (rarely used in dark mode)
         outline_roles = ["Primary", "Secondary", "Success", "Info", "Warning", "Danger"]
-        outline_role_lower = [r.lower() for r in outline_roles]
+        _OUTLINE_PROPS = [
+            ("color", "Color"), ("border-color", "BorderColor"),
+            ("hover-color", "HoverColor"), ("hover-bg", "HoverBg"), ("hover-border-color", "HoverBorderColor"),
+            ("active-color", "ActiveColor"), ("active-bg", "ActiveBg"), ("active-border-color", "ActiveBorderColor"),
+            ("disabled-color", "DisabledColor"), ("disabled-border-color", "DisabledBorderColor"),
+        ]
         outline_dark_lines = []
-        for role, rl in zip(outline_roles, outline_role_lower):
-            outline_dark_lines.append(f"""  [data-bs-theme=dark] .btn-outline-{rl} {{
-    --bs-btn-color: var(--CTBS-DarkThemeOutline{role}BtnColor);
-    --bs-btn-border-color: var(--CTBS-DarkThemeOutline{role}BtnBorderColor);
-    --bs-btn-hover-color: var(--CTBS-DarkThemeOutline{role}BtnHoverColor);
-    --bs-btn-hover-bg: var(--CTBS-DarkThemeOutline{role}BtnHoverBg);
-    --bs-btn-hover-border-color: var(--CTBS-DarkThemeOutline{role}BtnHoverBorderColor);
-    --bs-btn-active-color: var(--CTBS-DarkThemeOutline{role}BtnActiveColor);
-    --bs-btn-active-bg: var(--CTBS-DarkThemeOutline{role}BtnActiveBg);
-    --bs-btn-active-border-color: var(--CTBS-DarkThemeOutline{role}BtnActiveBorderColor);
-    --bs-btn-disabled-color: var(--CTBS-DarkThemeOutline{role}BtnDisabledColor);
-    --bs-btn-disabled-border-color: var(--CTBS-DarkThemeOutline{role}BtnDisabledBorderColor);
-  }}""")
+        for role in outline_roles:
+            rl = role.lower()
+            props = "\n".join(f"    --bs-btn-{p}: var(--CTBS-DarkThemeOutline{role}Btn{s});" for p, s in _OUTLINE_PROPS)
+            outline_dark_lines.append(f"  [data-bs-theme=dark] .btn-outline-{rl} {{\n{props}\n  }}")
         outline_dark = "\n".join(outline_dark_lines)
 
         return f"""

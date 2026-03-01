@@ -54,6 +54,7 @@
         }
 
         .content-wrapper {
+            position: relative;
             padding: 1rem;
             max-width: 1200px;
             margin: auto;
@@ -81,8 +82,8 @@
             margin-right: 0;
         }
 
-        /* Tame giant display headings on mobile */
-        .display-1, .display-4, .display-6 {
+        /* Tame display headings on mobile */
+        .display-4, .display-5, .display-6 {
             overflow-wrap: break-word;
             word-break: break-word;
         }
@@ -114,7 +115,7 @@
                            min="0"
                            max="1"
                            step="0.05"
-                           value="0.3"
+                           value="0.5"
                            style="width: 100px;">
                 </div>
                 <div class="d-flex align-items-center gap-2">
@@ -1544,28 +1545,24 @@
             const bgConfig = backgrounds[theme];
             const bgPath = isDark ? bgConfig.dark : bgConfig.light;
 
-            // Update body background
-            document.body.style.setProperty('--bg-image', `url('${bgPath}')`);
+            const hasDedicatedDark = bgConfig.light !== bgConfig.dark;
+            const blendMode = (isDark && !hasDedicatedDark) ? 'multiply' : 'normal';
+            const blendColor = (isDark && !hasDedicatedDark) ? '#555' : 'transparent';
 
-            // Set styles dynamically for the pseudo-element background
+            // Background image on body::before pseudo-element
+            // Cannot use background-attachment: fixed on body because mobile browsers ignore it,
+            // which breaks backdrop-filter. The pseudo-element must stay fully opaque.
             let style = document.getElementById('dynamic-bg-style');
             if (!style) {
                 style = document.createElement('style');
                 style.id = 'dynamic-bg-style';
                 document.head.appendChild(style);
             }
-
-            const hasDedicatedDark = bgConfig.light !== bgConfig.dark;
-            const blendMode = (isDark && !hasDedicatedDark) ? 'multiply' : 'normal';
-            const bgColor = (isDark && !hasDedicatedDark) ? '#555' : 'transparent';
-
-            style.innerHTML = `
-                body::before {
-                    background-image: url('${bgPath}');
-                    background-blend-mode: ${blendMode};
-                    background-color: ${bgColor};
-                }
-            `;
+            style.innerHTML = `body::before {
+                background-image: url('${bgPath}');
+                background-blend-mode: ${blendMode};
+                background-color: ${blendColor};
+            }`;
         }
 
         function setMode(mode) {

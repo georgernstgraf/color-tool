@@ -23,13 +23,14 @@ generate_all.sh
   |      writes: bs/ctbs-variables.css        (semantic variable definitions)
   |              bs/bootstrap-overrides.css    (component CSS with glass + dark mode)
   |
-  +--> ColorSim.py  x7                (Step 2 - run per theme)
+  +--> ColorSim.py  x8                (Step 2 - run per theme)
          reads:  img/<theme>.jpg (+ optional --dark-image)
                  bs/ctbs-variables.css         (to know which vars to generate)
                  bs/bootstrap-overrides.css    (to know which vars are used)
          writes: bs/<theme>-theme.css          (per-theme variable values)
 
-Current themes: krokus, herbst, sommer, lego (dual-image), loewe, wave, urania
+Current themes: krokus, herbst, sommer, lego (dual-image), loewe, wave, urania,
+                alien (dual-image, 32 clusters)
 ```
 
 ### CSS Load Order in the Browser
@@ -96,9 +97,31 @@ background-color: rgba(var(--CTBS-{X}Rgb), var(--CTBS-GlassOpacity));
 backdrop-filter: blur(var(--CTBS-GlassBlur));
 ```
 
-Glass opacity defaults to `0.3` in `bs/ui-config.css` and is adjustable via a
+Alerts and accordions are **not** in the glass selector list. Alerts have per-role
+backgrounds that must remain opaque for contrast; they receive dedicated dark-mode
+injection rules instead. Accordion glassmorphism is achieved through Bootstrap's
+own `--bs-accordion-bg` variable override.
+
+Tables are fully opaque (no glassmorphism). Only container/chrome components get
+glass treatment.
+
+Glass opacity defaults to `0.5` in `bs/ui-config.css` and is adjustable via a
 slider in `index.html`. At `opacity < 1`, the background image shows through,
 creating the glassmorphism effect.
+
+### Background Image Architecture
+
+The page background image is rendered via `body::before` as a fixed, full-viewport
+pseudo-element with `opacity: 0.8`. This approach:
+
+- Keeps the image independent of scrolling content
+- Allows theme-switching without layout reflow
+- Provides a uniform backdrop for glass blur effects
+
+**Mobile limitation**: `background-attachment: fixed` is not supported on iOS
+Safari or mobile Chrome. The background image will scroll with content on mobile.
+The blur slider only functions on desktop browsers; no mobile-specific workaround
+is implemented.
 
 ---
 
@@ -125,6 +148,13 @@ color is replaced with a `var(--CTBS-*)` reference. This file has 5 sections:
    - **Dark-mode glass counterpart rules** for each glass selector (substituting
      `--CTBS-*Rgb` with `--CTBS-DarkTheme*Rgb`)
    - **Dark-mode alert rules** using `DarkTheme{Role}TextEmphasis` / `BgSubtle`
+   - **Dark-mode contextual table rules** -- Bootstrap 5.3 has no
+     `[data-bs-theme=dark]` overrides for `.table-*` variant classes; CTBS
+     injects synthetic dark-mode table rules for all 8 roles
+   - **Progress bar track fix** -- `--bs-progress-bg` is mapped to
+     `SecondaryBgSubtle` (not `SecondaryBg`) because the original Bootstrap
+     value maps to dark accent colors in CTBS that destroy progress bar text
+     contrast
 
 3. **Accessibility Safety Overrides** -- Disabled nav/page links, pagination
    styling, `--bs-secondary-color` override.
@@ -142,6 +172,18 @@ Key implementation detail: Bootstrap's CSS contains 8 separate
 `[data-bs-theme=dark]` blocks. The script uses a mutable flag
 (`dark_role_rgb_injected`) to inject the global `--bs-{role}-rgb` dark-mode
 override only into the **first** dark block, avoiding duplication.
+
+#### Data-Driven Compaction
+
+Several repetitive code patterns are implemented as data-driven loops:
+
+- **`get_contextual_name()`** -- Selector-to-variable-name mapping uses
+  `_SELECTOR_PATTERNS` (regex list), `_SELECTOR_LITERALS` (dict), and
+  `_PROP_STRIP` (prefix list) instead of a chain of `elif` blocks.
+- **Outline button dark-mode injection** -- Uses `_OUTLINE_PROPS` tuple list
+  iterated in a loop instead of per-property f-strings.
+- **Dark-mode contextual table injection** -- Uses `_TABLE_PROPS` tuple list
+  with list comprehension instead of 9 explicit lines.
 
 #### Synthetic DarkTheme Variables
 
@@ -435,7 +477,7 @@ for contrast because there's no help from the body background. If contrast passe
 at opacity 1, it will pass at any opacity.
 
 All three test tools (test_contrast.py, test_browser_wcag.py, browser_wcag_tool.py)
-enforce opacity = 1 during testing. The default for end users remains 0.3.
+enforce opacity = 1 during testing. The default for end users remains 0.5.
 
 ### Why do outline buttons skip hover/active bg pairing for default Color?
 
@@ -473,6 +515,14 @@ On most backgrounds this helps contrast, but pathological background images
 (e.g. very bright spots behind dark-mode glass) could theoretically create
 localized failures. No automated test covers this yet.
 
+### Mobile Background & Blur Limitations
+
+`background-attachment: fixed` is not supported on iOS Safari or mobile Chrome.
+The `body::before` background image scrolls with content on these browsers
+instead of staying fixed. The blur slider (which adjusts `--CTBS-GlassBlur`)
+only works on desktop. No mobile-specific workaround is implemented; this is a
+known platform limitation with no CSS-only solution.
+
 ### ColorThief Extraction Variability
 
 `colorthief` uses a median-cut quantization algorithm that can produce slightly
@@ -507,16 +557,16 @@ structural separation between light and dark values.
 
 | File | Purpose | Lines |
 |------|---------|-------|
-| `extract_bootstrap_colors.py` | Bootstrap CSS parser, override/variable generator | ~649 |
+| `extract_bootstrap_colors.py` | Bootstrap CSS parser, override/variable generator | ~669 |
 | `ColorSim.py` | Image color extraction, role mapping, contrast correction, theme CSS generation | ~760 |
 | `browser_wcag_tool.py` | Standalone Playwright WCAG audit CLI | ~280 |
 | `test_contrast.py` | Unit tests: variable coverage + contrast ratio checks on generated CSS | ~133 |
 | `test_browser_wcag.py` | Integration tests: Playwright browser-rendered contrast audit | ~445 |
-| `generate_all.sh` | Orchestration: extract + generate all 7 themes | ~48 |
-| `index.html` | Comprehensive Bootstrap component catalogue with theme/mode switcher, glass sliders, localStorage | ~1297 |
+| `generate_all.sh` | Orchestration: extract + generate all 8 themes | ~52 |
+| `index.html` | Comprehensive Bootstrap component catalogue with theme/mode switcher, glass sliders, localStorage | ~1618 |
 | `Makefile` | Convenience targets: `test`, `test-contrast`, `test-browser`, `test-audit`, `generate` | ~23 |
 | `.github/workflows/pages.yml` | GitHub Actions: generate CSS and deploy to GitHub Pages | ~50 |
-| `bs/ui-config.css` | Glass opacity (0.3) and blur (8px) defaults | ~10 |
+| `bs/ui-config.css` | Glass opacity (0.5) and blur (8px) defaults | ~10 |
 | `bs/bootstrap-5.3.8.css` | Unmodified Bootstrap source (input to extractor) | large |
 | `requirements.txt` | Python deps: colorthief, Pillow, playwright, pytest | 4 |
 
@@ -525,12 +575,16 @@ structural separation between light and dark values.
 | What | File | Line(s) |
 |------|------|---------|
 | Glass selector list | `extract_bootstrap_colors.py` | 25-28 |
-| Synthetic DarkTheme variable registration | `extract_bootstrap_colors.py` | 312-330 |
-| Dark-mode deduplication flag | `extract_bootstrap_colors.py` | 336 |
-| Global `--bs-{role}-rgb` dark override | `extract_bootstrap_colors.py` | 371-380 |
-| Dark-mode glass counterpart generation | `extract_bootstrap_colors.py` | 443-469 |
-| Dark-mode alert injection | `extract_bootstrap_colors.py` | 472-490 |
-| Accessibility tail overrides | `extract_bootstrap_colors.py` | 497-587 |
+| `_SELECTOR_PATTERNS` / `_SELECTOR_LITERALS` (compacted name mapping) | `extract_bootstrap_colors.py` | 56-79 |
+| Synthetic DarkTheme variable registration | `extract_bootstrap_colors.py` | 300-320 |
+| Dark-mode deduplication flag | `extract_bootstrap_colors.py` | 324 |
+| Global `--bs-{role}-rgb` dark override | `extract_bootstrap_colors.py` | 359-370 |
+| Dark-mode glass counterpart generation | `extract_bootstrap_colors.py` | 432-460 |
+| Dark-mode alert injection | `extract_bootstrap_colors.py` | 465-477 |
+| `_TABLE_PROPS` (compacted dark-mode table injection) | `extract_bootstrap_colors.py` | 480-497 |
+| Progress bar track fix (`SecondaryBgSubtle`) | `extract_bootstrap_colors.py` | 506-510 |
+| `_OUTLINE_PROPS` (compacted outline button injection) | `extract_bootstrap_colors.py` | 544-553 |
+| Accessibility tail overrides | `extract_bootstrap_colors.py` | 560-600 |
 | `ensure_contrast_ratio()` (bounded 3-pass) | `ColorSim.py` | 125-189 |
 | Role mapping from image palette | `ColorSim.py` | 233-317 |
 | `background_pair_for()` pairing logic | `ColorSim.py` | 545-612 |

@@ -15,8 +15,8 @@ The system uses a 5-layer loading strategy for maximum flexibility:
 ## Features
 
 - **Automated WCAG AAA Compliance**: The generator intelligently adjusts color lightness to ensure a minimum 7:1 contrast ratio for all text elements.
-- **Image-to-Palette Generation**: Uses k-means clustering (up to 12 clusters) to extract harmonious colors from any background image.
-- **Glassmorphism Support**: Native support for translucency and `backdrop-filter` for containers (Cards, Navbars, Alerts).
+- **Image-to-Palette Generation**: Uses k-means clustering (up to 32 clusters) to extract harmonious colors from any background image.
+- **Glassmorphism Support**: Native support for translucency and `backdrop-filter` for containers (Cards, Navbars, Modals, Dropdowns, List Groups, Toasts, Offcanvas).
 - **Independent UI Control**: Adjust UI opacity and blur globally via `ui-config.css` without re-running the generator.
 
 ## Tools
@@ -51,10 +51,10 @@ Analyzes an image to extract a dominant color palette and maps it to the semanti
 
 **https://georgernstgraf.github.io/color-tool/**
 
-The preview page showcases every Bootstrap 5.3 component with theme-relevant styling. Use the controls to switch between themes (Herbst, Krokus, Sommer, Lego, Loewe, Wave, Urania), toggle light/dark mode, and adjust glassmorphism opacity and blur in real time. Preferences are persisted in localStorage.
+The preview page showcases every Bootstrap 5.3 component with theme-relevant styling. Use the controls to switch between themes (Herbst, Krokus, Sommer, Lego, Loewe, Wave, Urania, Alien), toggle light/dark mode, and adjust glassmorphism opacity and blur in real time. Preferences are persisted in localStorage.
 
 ### Adjusting UI Opacity
-You can adjust the transparency of all UI components (Cards, Alerts, etc.) across all themes simultaneously by editing **`bs/ui-config.css`**:
+You can adjust the transparency of all UI components (Cards, Modals, Dropdowns, etc.) across all themes simultaneously by editing **`bs/ui-config.css`**:
 
 ```css
 --CTBS-GlassOpacity: 0.8 !important; /* Set to 0 for full transparency */
