@@ -488,6 +488,34 @@ class BootstrapExtractor:
                                     ]
                                     res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n" + "\n".join(dark_rule_lines) + f"\n{indent}}}")
                                     break
+
+                        # Inject Dark Mode overrides for contextual tables
+                        if ".table-" in selector and not selector.startswith("@") and "data-bs-theme=dark" not in selector:
+                            table_role_map = {
+                                ".table-primary": "Primary",
+                                ".table-secondary": "Secondary",
+                                ".table-success": "Success",
+                                ".table-info": "Info",
+                                ".table-warning": "Warning",
+                                ".table-danger": "Danger",
+                                ".table-light": "Light",
+                                ".table-dark": "Dark",
+                            }
+                            for table_sel, role in table_role_map.items():
+                                if table_sel in selector:
+                                    dark_rule_lines = [
+                                        f"{indent}  --bs-table-color: var(--CTBS-DarkTheme{role}TableColor);",
+                                        f"{indent}  --bs-table-bg: var(--CTBS-DarkTheme{role}TableBg);",
+                                        f"{indent}  --bs-table-border-color: var(--CTBS-DarkTheme{role}TableBorderColor);",
+                                        f"{indent}  --bs-table-striped-bg: var(--CTBS-DarkTheme{role}TableStripedBg);",
+                                        f"{indent}  --bs-table-striped-color: var(--CTBS-DarkTheme{role}TableStripedColor);",
+                                        f"{indent}  --bs-table-active-bg: var(--CTBS-DarkTheme{role}TableActiveBg);",
+                                        f"{indent}  --bs-table-active-color: var(--CTBS-DarkTheme{role}TableActiveColor);",
+                                        f"{indent}  --bs-table-hover-bg: var(--CTBS-DarkTheme{role}TableHoverBg);",
+                                        f"{indent}  --bs-table-hover-color: var(--CTBS-DarkTheme{role}TableHoverColor);",
+                                    ]
+                                    res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n" + "\n".join(dark_rule_lines) + f"\n{indent}}}")
+                                    break
                 
                 i = j
             return "\n".join(res)
