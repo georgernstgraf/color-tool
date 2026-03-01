@@ -23,11 +23,13 @@ generate_all.sh
   |      writes: bs/ctbs-variables.css        (semantic variable definitions)
   |              bs/bootstrap-overrides.css    (component CSS with glass + dark mode)
   |
-  +--> ColorSim.py  x5                (Step 2 - run per theme)
+  +--> ColorSim.py  x7                (Step 2 - run per theme)
          reads:  img/<theme>.jpg (+ optional --dark-image)
                  bs/ctbs-variables.css         (to know which vars to generate)
                  bs/bootstrap-overrides.css    (to know which vars are used)
          writes: bs/<theme>-theme.css          (per-theme variable values)
+
+Current themes: krokus, herbst, sommer, lego (dual-image), loewe, wave, urania
 ```
 
 ### CSS Load Order in the Browser
@@ -244,70 +246,38 @@ Key setup steps before auditing:
 2. Disables CSS transitions/animations
 3. Removes background image on `body::before`
 
-Iterates all themes x both modes (10 scenarios total). The audit script walks
+Iterates all themes x both modes (14 scenarios total). The audit script walks
 the DOM text nodes, computes resolved foreground color and blended background
 (walking up the ancestor chain), and checks contrast ratio.
 
 ---
 
-## 4. Non-Obvious Design Decisions
+## 4. Preview Page (`index.html`)
 
-### Why global `--bs-{role}-rgb` override in dark mode?
+The preview page is a comprehensive Bootstrap 5.3 component catalogue that
+displays every theme-relevant component. It includes:
 
-We initially tried scoping the dark-mode role RGB override to just `.text-bg-*`
-selectors. This failed because `.text-success`, `.bg-primary`, `.border-danger`
-etc. all resolve through `--bs-{role}-rgb` and were still using light-mode
-values in dark mode. The global override in `[data-bs-theme=dark]` was the only
-way to fix all utility classes at once.
+- **Theme switcher** (`<select>`) -- switches the loaded `bs/<theme>-theme.css`
+  and updates the `body::before` background image
+- **Light/dark mode toggle** -- sets `data-bs-theme` on `<html>`
+- **Glass controls** -- sliders for `--CTBS-GlassOpacity` and `--CTBS-GlassBlur`
+- **localStorage persistence** -- theme choice (`ct-theme`) and mode (`ct-mode`)
+  are saved and restored on page load
+- **Background images** -- mapped per-theme in a JS `backgrounds` object; Lego
+  has separate light/dark images, all others use the same image for both modes
+- **Tooltip/popover initialization** -- Bootstrap JS components are initialized
+  at the bottom of the script
 
-### Why was `.alert` removed from `glass_selectors`?
+The page covers: alerts, badges, buttons (solid, outline, link), tables,
+accordion, navbar, dropdowns, list groups, modal, toast, offcanvas, progress
+bars, forms (floating labels, validation states), spinners, tooltips, popovers,
+placeholders, typography, colored links, close buttons, carousel, images/figures,
+nav tabs, nav underline, and breadcrumbs.
 
-Alerts have per-role backgrounds (`--bs-alert-bg`) that need to remain opaque
-for contrast. Making them glass (semi-transparent) would blend them with the
-page background image, destroying the carefully calibrated `BgSubtle` contrast.
-Dark alerts use dedicated injection rules instead.
-
-### Why disable glass on `[class*="text-bg-"] .card-header/.card-footer`?
-
-`.text-bg-primary` on a card sets the card's background to `--bs-primary-rgb`.
-If the card-header is also glass, it gets a semi-transparent overlay that shifts
-the effective background, breaking the contrast guarantee of `{Role}BtnColor`
-against `{Role}`. Setting these to `background-color: transparent;
-backdrop-filter: none;` preserves the parent card's solid color.
-
-### Why test at glass opacity = 1?
-
-Glass at opacity < 1 blends the component background with whatever is behind it
-(usually lighter/darker body bg). At opacity = 1, the component background is
-**exactly** the CTBS variable value with no blending -- this is the **worst case**
-for contrast because there's no help from the body background. If contrast passes
-at opacity 1, it will pass at any opacity.
-
-All three test tools (test_contrast.py, test_browser_wcag.py, browser_wcag_tool.py)
-enforce opacity = 1 during testing. The default for end users remains 0.3.
-
-### Why do outline buttons skip hover/active bg pairing for default Color?
-
-Outline buttons in their default (non-hovered) state have `transparent`
-background. Their text color must contrast with `BodyBg`, not with the button's
-hover/active background. `background_pair_for()` detects this case and falls
-through to the `BodyBg` fallback instead of incorrectly pairing against
-`HoverBg` or `ActiveBg`.
-
-### Why does `ensure_contrast_ratio()` reduce saturation before falling to black/white?
-
-Pure desaturation (reducing S toward 0 in HSL) gives more lightness range for
-contrast while keeping the original hue recognizable. A blue that can't reach
-7:1 at full saturation can often reach it as a desaturated (grayish) blue. This
-preserves more visual identity from the source image than jumping straight to
-black/white.
-
-### Why the deduplication flag for dark block injection?
-
-Bootstrap 5.3.8's CSS has 8 separate `[data-bs-theme=dark]` blocks (one for
-the main root, plus component-specific ones). Without the
-`dark_role_rgb_injected` flag, the heading/emphasis/role-rgb overrides would be
-emitted 8 times in the output CSS, bloating the file and causing confusion.
+All markup has been crafted to pass WCAG AAA contrast across all themes. Known
+problem areas (white text on colored progress bars, carousel text overlays,
+`btn-outline-light`/`btn-outline-dark`, muted text utilities) are avoided or
+mitigated in the HTML.
 
 ---
 
@@ -371,24 +341,128 @@ pip install -r requirements.txt
 playwright install chromium
 
 # Generate all theme CSS
-./generate_all.sh
+make generate          # or: ./generate_all.sh
 
 # Run all tests
-pytest -q
+make test              # or: pytest -q
 
 # Run only unit tests (no browser needed)
-pytest test_contrast.py -q
+make test-contrast     # or: pytest test_contrast.py -q
 
 # Run only browser tests
-pytest test_browser_wcag.py -q
+make test-browser      # or: pytest test_browser_wcag.py -q
 
 # Standalone audit
-python browser_wcag_tool.py
+make test-audit        # or: python browser_wcag_tool.py
 ```
 
 ---
 
-## 6. Known Constraints & Future Considerations
+## 6. Makefile
+
+The `Makefile` provides convenience targets for common operations. All targets
+use `./venv/bin/python` by default (override with `PYTHON=...`).
+
+| Target | Command | Description |
+|--------|---------|-------------|
+| `make test` | runs `test-contrast` then `test-browser` | Full test suite |
+| `make test-contrast` | `pytest test_contrast.py -q` | Unit/regression contrast checks (no browser) |
+| `make test-browser` | `pytest test_browser_wcag.py -q` | Playwright browser-rendered WCAG audit (3 tests) |
+| `make test-audit` | `python browser_wcag_tool.py` | Standalone CLI WCAG audit (not pytest) |
+| `make generate` | `./generate_all.sh` | Regenerate all theme CSS and overrides |
+
+---
+
+## 7. GitHub Pages & CI
+
+The preview page is deployed automatically to GitHub Pages at
+**https://georgernstgraf.github.io/color-tool/** via a GitHub Actions workflow.
+
+### Workflow: `.github/workflows/pages.yml`
+
+Triggered on every push to `main` (and manually via `workflow_dispatch`):
+
+1. **Checkout** the repository
+2. **Setup Python 3.12** and install `colorthief` + `Pillow`
+3. **Run `generate_all.sh`** to produce all theme CSS and override files
+4. **Assemble the site** by copying `index.html`, `bs/`, and `img/` into `_site/`
+5. **Upload** the artifact via `actions/upload-pages-artifact`
+6. **Deploy** via `actions/deploy-pages`
+
+This keeps generated CSS files out of the repository (they remain gitignored)
+while still serving a fully functional preview site. The workflow uses the
+`github-pages` environment with `id-token: write` permission for OIDC-based
+deployment.
+
+### Concurrency
+
+The workflow uses `concurrency: { group: pages, cancel-in-progress: true }` so
+that rapid successive pushes cancel stale deployments rather than queueing them.
+
+---
+
+## 8. Non-Obvious Design Decisions
+
+### Why global `--bs-{role}-rgb` override in dark mode?
+
+We initially tried scoping the dark-mode role RGB override to just `.text-bg-*`
+selectors. This failed because `.text-success`, `.bg-primary`, `.border-danger`
+etc. all resolve through `--bs-{role}-rgb` and were still using light-mode
+values in dark mode. The global override in `[data-bs-theme=dark]` was the only
+way to fix all utility classes at once.
+
+### Why was `.alert` removed from `glass_selectors`?
+
+Alerts have per-role backgrounds (`--bs-alert-bg`) that need to remain opaque
+for contrast. Making them glass (semi-transparent) would blend them with the
+page background image, destroying the carefully calibrated `BgSubtle` contrast.
+Dark alerts use dedicated injection rules instead.
+
+### Why disable glass on `[class*="text-bg-"] .card-header/.card-footer`?
+
+`.text-bg-primary` on a card sets the card's background to `--bs-primary-rgb`.
+If the card-header is also glass, it gets a semi-transparent overlay that shifts
+the effective background, breaking the contrast guarantee of `{Role}BtnColor`
+against `{Role}`. Setting these to `background-color: transparent;
+backdrop-filter: none;` preserves the parent card's solid color.
+
+### Why test at glass opacity = 1?
+
+Glass at opacity < 1 blends the component background with whatever is behind it
+(usually lighter/darker body bg). At opacity = 1, the component background is
+**exactly** the CTBS variable value with no blending -- this is the **worst case**
+for contrast because there's no help from the body background. If contrast passes
+at opacity 1, it will pass at any opacity.
+
+All three test tools (test_contrast.py, test_browser_wcag.py, browser_wcag_tool.py)
+enforce opacity = 1 during testing. The default for end users remains 0.3.
+
+### Why do outline buttons skip hover/active bg pairing for default Color?
+
+Outline buttons in their default (non-hovered) state have `transparent`
+background. Their text color must contrast with `BodyBg`, not with the button's
+hover/active background. `background_pair_for()` detects this case and falls
+through to the `BodyBg` fallback instead of incorrectly pairing against
+`HoverBg` or `ActiveBg`.
+
+### Why does `ensure_contrast_ratio()` reduce saturation before falling to black/white?
+
+Pure desaturation (reducing S toward 0 in HSL) gives more lightness range for
+contrast while keeping the original hue recognizable. A blue that can't reach
+7:1 at full saturation can often reach it as a desaturated (grayish) blue. This
+preserves more visual identity from the source image than jumping straight to
+black/white.
+
+### Why the deduplication flag for dark block injection?
+
+Bootstrap 5.3.8's CSS has 8 separate `[data-bs-theme=dark]` blocks (one for
+the main root, plus component-specific ones). Without the
+`dark_role_rgb_injected` flag, the heading/emphasis/role-rgb overrides would be
+emitted 8 times in the output CSS, bloating the file and causing confusion.
+
+---
+
+## 9. Known Constraints & Future Considerations
 
 ### Glass at Partial Opacity on Complex Backgrounds
 
@@ -429,7 +503,7 @@ structural separation between light and dark values.
 
 ---
 
-## 7. File Reference
+## 10. File Reference
 
 | File | Purpose | Lines |
 |------|---------|-------|
@@ -438,8 +512,10 @@ structural separation between light and dark values.
 | `browser_wcag_tool.py` | Standalone Playwright WCAG audit CLI | ~280 |
 | `test_contrast.py` | Unit tests: variable coverage + contrast ratio checks on generated CSS | ~133 |
 | `test_browser_wcag.py` | Integration tests: Playwright browser-rendered contrast audit | ~445 |
-| `generate_all.sh` | Orchestration: extract + generate all 5 themes | ~40 |
-| `index.html` | Interactive preview with theme/mode switcher, glass sliders | ~418 |
+| `generate_all.sh` | Orchestration: extract + generate all 7 themes | ~48 |
+| `index.html` | Comprehensive Bootstrap component catalogue with theme/mode switcher, glass sliders, localStorage | ~1297 |
+| `Makefile` | Convenience targets: `test`, `test-contrast`, `test-browser`, `test-audit`, `generate` | ~23 |
+| `.github/workflows/pages.yml` | GitHub Actions: generate CSS and deploy to GitHub Pages | ~50 |
 | `bs/ui-config.css` | Glass opacity (0.3) and blur (8px) defaults | ~10 |
 | `bs/bootstrap-5.3.8.css` | Unmodified Bootstrap source (input to extractor) | large |
 | `requirements.txt` | Python deps: colorthief, Pillow, playwright, pytest | 4 |
