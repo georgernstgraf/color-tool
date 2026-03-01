@@ -516,6 +516,20 @@ class BootstrapExtractor:
                                     ]
                                     res.append(f"{indent}[data-bs-theme=dark] {selector} {{\n" + "\n".join(dark_rule_lines) + f"\n{indent}}}")
                                     break
+
+                        # Inject progress bar track override and dark-mode progress vars
+                        if ".progress" in selector and ".progress-bar" not in selector and not selector.startswith("@") and "data-bs-theme=dark" not in selector:
+                            # Light-mode: override track bg to a subtle background
+                            res.append(f"{indent}.progress,\n{indent}.progress-stacked {{\n"
+                                        f"{indent}  --bs-progress-bg: var(--CTBS-SecondaryBgSubtle);\n"
+                                        f"{indent}}}")
+                            # Dark-mode: override track bg + bar fill + bar text
+                            dark_progress_lines = [
+                                f"{indent}  --bs-progress-bg: var(--CTBS-DarkThemeSecondaryBgSubtle);",
+                                f"{indent}  --bs-progress-bar-bg: var(--CTBS-DarkThemeProgressBarBg);",
+                                f"{indent}  --bs-progress-bar-color: var(--CTBS-DarkThemeProgressBarColor);",
+                            ]
+                            res.append(f"{indent}[data-bs-theme=dark] .progress,\n{indent}[data-bs-theme=dark] .progress-stacked {{\n" + "\n".join(dark_progress_lines) + f"\n{indent}}}")
                 
                 i = j
             return "\n".join(res)
