@@ -41,4 +41,8 @@ python ColorSim.py img/loewe.jpg --output bs/loewe-theme.css --clusters 12
 echo "   - Wave"
 python ColorSim.py img/wave.jpg --output bs/wave-theme.css --clusters 12
 
+# Urania
+echo "   - Urania"
+python ColorSim.py img/bg-urania.jpg --output bs/urania-theme.css --clusters 12
+
 echo "Done!"
