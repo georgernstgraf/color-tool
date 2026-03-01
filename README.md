@@ -47,15 +47,11 @@ Analyzes an image to extract a dominant color palette and maps it to the semanti
     -   `--no-blur`: Skip the Gaussian blur pre-processing step.
     -   `--vars-file`: Path to the `ctbs-variables.css` file to extract variable names from.
 
-## Preview & Examples
+## Live Preview
 
-The repository includes several pre-configured interactive preview files that demonstrate the system with different background images:
+**https://georgernstgraf.github.io/color-tool/**
 
-- **`lego.html`**: A vibrant theme generated from Lego backgrounds. Demonstrates high-contrast primary colors and glassmorphism.
-- **`krokus.html`**: A softer, nature-inspired theme generated from a floral image. Demonstrates how the system handles subtle hues and muted palettes.
-- **`sommer.html`**: A bright, seasonal theme generated from a summer landscape image.
-
-To see them in action, simply open the `.html` files in any modern web browser.
+The preview page showcases every Bootstrap 5.3 component with theme-relevant styling. Use the controls to switch between themes (Herbst, Krokus, Sommer, Lego, Loewe, Wave, Urania), toggle light/dark mode, and adjust glassmorphism opacity and blur in real time. Preferences are persisted in localStorage.
 
 ### Adjusting UI Opacity
 You can adjust the transparency of all UI components (Cards, Alerts, etc.) across all themes simultaneously by editing **`bs/ui-config.css`**:
