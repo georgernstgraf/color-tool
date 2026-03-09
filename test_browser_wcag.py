@@ -175,7 +175,7 @@ def test_rendered_wcag_contrast(preview_url):
         for theme in themes:
             page.select_option("#themeSelect", theme)
             page.wait_for_function(
-                "theme => document.getElementById('themeStylesheet').getAttribute('href').includes(`${theme}-theme.css`)",
+                "theme => document.getElementById('themeStylesheet').getAttribute('href').includes(`/` + theme + `/theme.css`)",
                 arg=theme,
             )
 
@@ -283,7 +283,7 @@ def test_can_click_through_theme_and_mode_controls(preview_url):
         for theme in themes:
             page.select_option("#themeSelect", theme)
             page.wait_for_function(
-                "theme => document.getElementById('themeStylesheet').getAttribute('href').includes(`${theme}-theme.css`)",
+                "theme => document.getElementById('themeStylesheet').getAttribute('href').includes(`/` + theme + `/theme.css`)",
                 arg=theme,
             )
 
@@ -415,7 +415,7 @@ def test_active_pill_is_contrast_compliant(preview_url):
         for theme in themes:
             page.select_option("#themeSelect", theme)
             page.wait_for_function(
-                "theme => document.getElementById('themeStylesheet').getAttribute('href').includes(`${theme}-theme.css`)",
+                "theme => document.getElementById('themeStylesheet').getAttribute('href').includes(`/` + theme + `/theme.css`)",
                 arg=theme,
             )
 
@@ -591,7 +591,7 @@ def test_progress_bar_rendered_contrast(preview_url):
         for theme in themes:
             page.select_option("#themeSelect", theme)
             page.wait_for_function(
-                "theme => document.getElementById('themeStylesheet').getAttribute('href').includes(`${theme}-theme.css`)",
+                "theme => document.getElementById('themeStylesheet').getAttribute('href').includes(`/` + theme + `/theme.css`)",
                 arg=theme,
             )
 

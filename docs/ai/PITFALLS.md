@@ -24,3 +24,5 @@ Read this file carefully before making changes in affected areas.
 - Do not replace numbered cluster variables with semantic names inside `palette.css`; themes can have different actual cluster counts and need a stable raw extraction layer
 - Do not list a theme in the preview or generation workflow unless its `themes/<name>/` directory has valid dual-image assets and a `palette.css`
 - Do not assume every directory under `themes/` is active; incomplete directories such as `themes/leisure/` are expected to be skipped
+- Do not overwrite an existing `themes/<name>/palette.css` from `generate_all.sh`; that file is treated as user-edited source once it exists
+- Do not rely on mistyped asset names such as `bs-light.*`; theme automation only considers canonical `bg-light.*` and `bg-dark.*` image files

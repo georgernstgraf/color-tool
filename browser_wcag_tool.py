@@ -199,7 +199,7 @@ def run(url: str, verbose: bool) -> list[str]:
         for option in options:
             page.select_option("#themeSelect", option["value"])
             page.wait_for_function(
-                "theme => document.getElementById('themeStylesheet').getAttribute('href').includes(`${theme}-theme.css`)",
+                "theme => document.getElementById('themeStylesheet').getAttribute('href').includes(`/` + theme + `/theme.css`)",
                 arg=option["value"],
             )
 

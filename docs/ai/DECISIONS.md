@@ -10,7 +10,7 @@ Each entry documents WHAT was decided and WHY.
 - **Tradeoff**: Themeing breaks if consumers change the file order
 
 ## 2026-03-09: Keep generated theme CSS out of Git
-- **Choice**: Treat `bs/bootstrap-overrides.css`, `bs/ctbs-variables.css`, and `themes/<name>/<name>-theme.css` as regenerated artifacts while committing `themes/<name>/palette.css`
+- **Choice**: Treat `bs/bootstrap-overrides.css`, `bs/ctbs-variables.css`, and `themes/<name>/theme.css` as regenerated artifacts while committing `themes/<name>/palette.css`
 - **Reason**: The scripts, source images, and Bootstrap input remain the source of truth and avoid generated diff churn
 - **Considered**: Committing generated CSS alongside the source scripts
 - **Tradeoff**: Tests, previews, and deployments must regenerate assets before use
@@ -88,7 +88,7 @@ Each entry documents WHAT was decided and WHY.
 - **Tradeoff**: The pipeline gains an extra artifact and parser that must stay in sync with the theme generator
 
 ## 2026-03-09: Move bundled themes under `themes/`
-- **Choice**: Store each bundled theme in `themes/<name>/` with `bg-light.*`, `bg-dark.*`, `palette.css`, and generated `<name>-theme.css`
+- **Choice**: Store each bundled theme in `themes/<name>/` with `bg-light.*`, `bg-dark.*`, `palette.css`, and generated `theme.css`
 - **Reason**: Theme assets, editable palettes, and generated outputs now belong together and the preview can load them directly from one directory tree
 - **Considered**: Keeping generated theme CSS in `bs/` and source images in `img/`
 - **Tradeoff**: Preview paths, tests, deployment, and generation scripts all need to target the new directory structure
@@ -98,3 +98,9 @@ Each entry documents WHAT was decided and WHY.
 - **Reason**: Different themes can produce different actual cluster counts, so numbering preserves the raw extraction output while keeping semantic remapping stable
 - **Considered**: Encoding semantic meaning directly into cluster variable names or relying on implicit cluster order alone
 - **Tradeoff**: `palette.css` has two layers to understand: raw numbered clusters and explicit semantic aliases
+
+## 2026-03-09: Auto-create palettes only when missing
+- **Choice**: Make `generate_all.sh` create `themes/<name>/palette.css` only when it does not already exist, then always generate `themes/<name>/theme.css` from that palette
+- **Reason**: Existing palettes are user-edited assets and must be preserved, while brand-new themes still need a first-pass generated palette
+- **Considered**: Always regenerating palettes from images or always skipping themes without palettes
+- **Tradeoff**: Theme directories now depend on both canonical background filenames and palette-file presence to determine the exact generation path

@@ -9,7 +9,7 @@ The system uses a 5-layer loading strategy for maximum flexibility:
 0.  **`bootstrap.css`**: The original Bootstrap framework (layout, components, logic).
 1.  **`ui-config.css`**: Global "knobs" for UI behavior (opacity, blur) independent of colors.
 2.  **`ctbs-variables.css`**: Defines the "Internal" semantic variables (`--CTBS-...`) with the original Bootstrap color values.
-3.  **`themes/<name>/<name>-theme.css`**: A generated file that overrides the `--CTBS-...` variables.
+3.  **`themes/<name>/theme.css`**: A generated file that overrides the `--CTBS-...` variables.
 4.  **`bootstrap-overrides.css`**: The "Patch" file that connects the `--CTBS-...` variables to the actual Bootstrap components.
 
 ## Features
@@ -39,11 +39,11 @@ This tool generates both `bs/bootstrap-overrides.css` and `bs/ctbs-variables.css
 `ColorSim.py` now has three explicit modes. Extraction modes always require both a light and a dark image.
 
 - **Mode 1 - Images to ready theme**
-  - `source venv/bin/activate && python3 ColorSim.py --light-image themes/lego/bg-light.png --dark-image themes/lego/bg-dark.png -o themes/lego/lego-theme.css`
+  - `source venv/bin/activate && python3 ColorSim.py --light-image themes/lego/bg-light.png --dark-image themes/lego/bg-dark.png -o themes/lego/theme.css`
 - **Mode 2 - Images to `palette.css`**
   - `source venv/bin/activate && python3 ColorSim.py --light-image themes/lego/bg-light.png --dark-image themes/lego/bg-dark.png --palette-output themes/lego/palette.css`
 - **Mode 3 - `palette.css` to ready theme**
-  - `source venv/bin/activate && python3 ColorSim.py --palette-file themes/lego/palette.css -o themes/lego/lego-theme.css`
+  - `source venv/bin/activate && python3 ColorSim.py --palette-file themes/lego/palette.css -o themes/lego/theme.css`
 
 - **Arguments**:
   - `--light-image`: Path to the light-mode source image.
@@ -77,7 +77,7 @@ Bundled themes now live under `themes/<name>/`.
 - `bg-light.*`: committed light source image
 - `bg-dark.*`: committed dark source image
 - `palette.css`: committed editable semantic palette source
-- `<name>-theme.css`: generated theme output
+- `theme.css`: generated theme output
 
 Currently active dual-image themes: `alien`, `krokus`, `lego`.
 
@@ -118,7 +118,7 @@ python3 ColorSim.py \
 python3 ColorSim.py \
     --light-image themes/lego/bg-light.png \
     --dark-image themes/lego/bg-dark.png \
-    -o themes/lego/lego-theme.css
+    -o themes/lego/theme.css
 ```
 
 ### 3. Generate a theme from edited `palette.css`
@@ -127,7 +127,7 @@ python3 ColorSim.py \
 # Edit themes/alien/palette.css first, then generate theme CSS
 python3 ColorSim.py \
     --palette-file themes/alien/palette.css \
-    -o themes/alien/alien-theme.css
+    -o themes/alien/theme.css
 ```
 
 ### 4. High-Fidelity Extraction (More Clusters)
@@ -162,7 +162,7 @@ If you have modified `ctbs-variables.css` or created your own semantic map, spec
 python3 ColorSim.py \
     --palette-file themes/lego/palette.css \
     --vars-file my-custom-map.css \
-    -o themes/lego/custom-theme.css
+    -o themes/lego/theme.css
 ```
 
 ## Setup
@@ -230,5 +230,5 @@ python3 ColorSim.py \
 # 3. Generate the final theme CSS from palette.css
 python3 ColorSim.py \
     --palette-file themes/krokus/palette.css \
-    -o themes/krokus/krokus-theme.css
+    -o themes/krokus/theme.css
 ```

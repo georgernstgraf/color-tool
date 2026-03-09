@@ -334,13 +334,15 @@ def write_palette_css(
         ":root {",
     ]
 
-    for mode, colors in (("light", light_colors), ("dark", dark_colors)):
+    for mode, colors, indices in (
+        ("light", light_colors, light_indices),
+        ("dark", dark_colors, dark_indices),
+    ):
         lines.append(f"    /* === {mode.upper()} CLUSTERS === */")
         for index, rgb in enumerate(colors, start=1):
             lines.append(f"    --{mode}-cluster-{index:03d}: {rgb_to_hex(rgb)};")
         lines.append("")
 
-    for mode, indices in (("light", light_indices), ("dark", dark_indices)):
         lines.append(f"    /* === {mode.upper()} ROLE SOURCES === */")
         for role in CORE_ROLES:
             index = indices.get(role)

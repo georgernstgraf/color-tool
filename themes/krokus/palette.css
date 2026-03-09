@@ -15,6 +15,16 @@
     --light-cluster-010: #ccb7d9;
     --light-cluster-011: #c5bc6c;
 
+    /* === LIGHT ROLE SOURCES === */
+    --light-primary-source: var(--light-cluster-005);
+    --light-secondary-source: var(--light-cluster-011);
+    --light-success-source: var(--light-cluster-001);
+    --light-info-source: var(--light-cluster-002);
+    --light-warning-source: var(--light-cluster-007);
+    --light-danger-source: var(--light-cluster-004);
+    --light-light-source: var(--light-cluster-003);
+    --light-dark-source: var(--light-cluster-002);
+
     /* === DARK CLUSTERS === */
     --dark-cluster-001: #3b2658;
     --dark-cluster-002: #241736;
@@ -27,16 +37,6 @@
     --dark-cluster-009: #150f1f;
     --dark-cluster-010: #343435;
     --dark-cluster-011: #1c144c;
-
-    /* === LIGHT ROLE SOURCES === */
-    --light-primary-source: var(--light-cluster-005);
-    --light-secondary-source: var(--light-cluster-011);
-    --light-success-source: var(--light-cluster-001);
-    --light-info-source: var(--light-cluster-002);
-    --light-warning-source: var(--light-cluster-007);
-    --light-danger-source: var(--light-cluster-004);
-    --light-light-source: var(--light-cluster-003);
-    --light-dark-source: var(--light-cluster-002);
 
     /* === DARK ROLE SOURCES === */
     --dark-primary-source: var(--dark-cluster-011);
