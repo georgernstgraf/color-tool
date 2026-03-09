@@ -9,6 +9,7 @@ Business rules and domain relationships not obvious from code.
 - Preview scenario: One theme rendered in one mode (`light` or `dark`) for manual preview or browser-based WCAG auditing
 - Theme family: The currently active bundled themes are `alien`, `krokus`, and `lego`
 - Theme family: `leisure` now has canonical `bg-light.png` and `bg-dark.png` assets plus an auto-generated initial `palette.css` and `theme.css`
+- Theme family: The preview now exposes `alien`, `krokus`, `lego`, and `leisure`
 - Glass control: Runtime variables `--CTBS-GlassOpacity` and `--CTBS-GlassBlur` that affect translucency and blur without regenerating theme colors
 - Background pair: The surface that a text variable is expected to render on when contrast is enforced
 - Palette source: The editable `themes/<name>/palette.css` file containing extracted clusters and semantic `*-source` remapping variables
@@ -32,4 +33,5 @@ Business rules and domain relationships not obvious from code.
 - `make_text_aaa_compatible()` performs dead-zone cleanup, text-to-background pairing correction, and a final black-or-white fallback pass
 - `background_pair_for()` must map `TextEmphasis` to `BgSubtle`, default outline buttons to `BodyBg`, and normal button text to `BtnBg` or the base role color before any hover-state backgrounds
 - Browser audits cover every active bundled theme in both light and dark mode
+- Browser audit coverage is driven from all options in `#themeSelect`, so adding a theme to the select box adds it to the rendered light and dark checks automatically
 - `alien` keeps the high-fidelity `32` cluster extraction path, while `krokus` and `lego` currently use `12`

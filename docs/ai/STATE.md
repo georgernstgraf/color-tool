@@ -14,6 +14,7 @@ The theme pipeline now uses committed numbered-cluster `palette.css` files under
 - [x] Preserved numbered cluster variables in `palette.css` and refined the semantic `*-source` mappings for `alien`, `krokus`, and `lego`
 - [x] Changed bundled generated theme output to `themes/<name>/theme.css` and let `generate_all.sh` auto-create missing palettes from valid dual-image assets
 - [x] Cleaned `themes/leisure/` asset naming, removed the stray SVG typo file, and let `generate_all.sh` create its first `palette.css`
+- [x] Exposed `leisure` in the preview and confirmed the full contrast test suite covers every theme select option in both light and dark mode
 
 ## Pending
 - [ ] None

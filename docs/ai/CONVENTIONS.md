@@ -39,6 +39,7 @@ Follow these without question. Do not deviate unless explicitly told.
 - Store the active theme in `localStorage` under `ct-theme` and the active mode under `ct-mode`
 - For bundled themes, switch the loaded theme CSS and the mapped background image together from the preview page controls using assets under `themes/<name>/`
 - Only expose themes in the preview when they have valid dual-image assets and a committed `palette.css`
+- Keep preview form controls explicitly labeled; wrapping a control inside `<label>` covers the accessibility association, while `name` is still needed for form submission and `id` is still needed when JS or tests target the control
 
 ## Database
 - No database is used in this project

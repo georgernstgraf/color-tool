@@ -16,7 +16,7 @@
     --light-cluster-011: #fcf4f8;
 
     /* === LIGHT ROLE SOURCES === */
-    --light-primary-source: var(--light-cluster-002);
+    --light-primary-source: var(--light-cluster-009);
     --light-secondary-source: var(--light-cluster-006);
     --light-success-source: var(--light-cluster-001);
     --light-info-source: var(--light-cluster-006);
