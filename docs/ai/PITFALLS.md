@@ -19,3 +19,8 @@ Read this file carefully before making changes in affected areas.
 - Do not assume a Bootstrap upgrade is safe; the extractor depends on Bootstrap 5.3.8 selector structure and dark-block layout
 - Do not expect blur controls to behave consistently on mobile; desktop assumptions drive both the preview and the automated test setup
 - Do not expect palette extraction to stay identical after changing image files or compression; ColorThief quantization can shift role mapping even for visually similar assets
+- Do not fall back from a missing dark image to the light image; image extraction is now invalid unless both modes are supplied explicitly
+- Do not treat cluster order as the semantic source of truth; the editable `*-source` variables in `palette.css` are the intended remapping surface
+- Do not replace numbered cluster variables with semantic names inside `palette.css`; themes can have different actual cluster counts and need a stable raw extraction layer
+- Do not list a theme in the preview or generation workflow unless its `themes/<name>/` directory has valid dual-image assets and a `palette.css`
+- Do not assume every directory under `themes/` is active; incomplete directories such as `themes/leisure/` are expected to be skipped

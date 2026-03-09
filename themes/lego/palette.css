@@ -1,0 +1,50 @@
+/* GENERATED PALETTE SOURCES */
+/* Edit the *-source variables to remap semantic roles. */
+
+:root {
+    /* === LIGHT CLUSTERS === */
+    --light-cluster-001: #2c3434;
+    --light-cluster-002: #eaeeef;
+    --light-cluster-003: #7f8b8c;
+    --light-cluster-004: #745b45;
+    --light-cluster-005: #a47a50;
+    --light-cluster-006: #a79d94;
+    --light-cluster-007: #b2b9ba;
+    --light-cluster-008: #3fa4b2;
+    --light-cluster-009: #c0b09b;
+    --light-cluster-010: #c5c3c0;
+    --light-cluster-011: #2a90a1;
+
+    /* === DARK CLUSTERS === */
+    --dark-cluster-001: #06121d;
+    --dark-cluster-002: #9e7a30;
+    --dark-cluster-003: #554a39;
+    --dark-cluster-004: #65716c;
+    --dark-cluster-005: #3a5769;
+    --dark-cluster-006: #2d2d2b;
+    --dark-cluster-007: #2d4652;
+    --dark-cluster-008: #1a3649;
+    --dark-cluster-009: #947376;
+    --dark-cluster-010: #122c3a;
+    --dark-cluster-011: #8c2a47;
+
+    /* === LIGHT ROLE SOURCES === */
+    --light-primary-source: var(--light-cluster-008);
+    --light-secondary-source: var(--light-cluster-005);
+    --light-success-source: var(--light-cluster-001);
+    --light-info-source: var(--light-cluster-011);
+    --light-warning-source: var(--light-cluster-005);
+    --light-danger-source: var(--light-cluster-009);
+    --light-light-source: var(--light-cluster-002);
+    --light-dark-source: var(--light-cluster-001);
+
+    /* === DARK ROLE SOURCES === */
+    --dark-primary-source: var(--dark-cluster-008);
+    --dark-secondary-source: var(--dark-cluster-002);
+    --dark-success-source: var(--dark-cluster-004);
+    --dark-info-source: var(--dark-cluster-007);
+    --dark-warning-source: var(--dark-cluster-002);
+    --dark-danger-source: var(--dark-cluster-011);
+    --dark-light-source: var(--dark-cluster-004);
+    --dark-dark-source: var(--dark-cluster-001);
+}

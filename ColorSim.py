@@ -16,6 +16,21 @@ from colorthief import ColorThief
 import colorsys
 
 
+CORE_ROLES = ["Primary", "Secondary", "Success", "Info", "Warning", "Danger", "Light", "Dark"]
+STATUS_ROLE_TARGETS = {
+    "Success": 120,
+    "Info": 195,
+    "Warning": 45,
+    "Danger": 0,
+}
+STATUS_ROLE_CATEGORIES = {
+    "Success": "green",
+    "Info": "cyan",
+    "Warning": "yellow",
+    "Danger": "red",
+}
+
+
 def hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
     hex_color = hex_color.lstrip('#')
     rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
@@ -230,15 +245,122 @@ def score_color(rgb, target_h=None):
     return sat_score + lum_score + hue_score - penalty
 
 
+def hue_diff(h1: float, h2: float) -> float:
+    diff = abs(h1 - h2)
+    return min(diff, 360 - diff)
+
+
+def refine_status_color(rgb: tuple[int, int, int], target_hue: float) -> tuple[int, int, int]:
+    h, s, l = rgb_to_hsl(rgb)
+    diff = target_hue - h
+    if diff > 180:
+        diff -= 360
+    if diff < -180:
+        diff += 360
+    refined_h = (h + diff * 0.3) % 360
+    refined_s = max(40, min(s, 90))
+    refined_l = max(35, min(l, 60))
+    return hsl_to_rgb((refined_h, refined_s, refined_l))
+
+
+def normalize_light_role(rgb: tuple[int, int, int]) -> tuple[int, int, int]:
+    if get_luminance(rgb) >= 0.85:
+        return rgb
+    h, s, _ = rgb_to_hsl(rgb)
+    return hsl_to_rgb((h, s, 95))
+
+
+def normalize_dark_role(rgb: tuple[int, int, int]) -> tuple[int, int, int]:
+    if get_luminance(rgb) <= 0.10:
+        return rgb
+    h, s, _ = rgb_to_hsl(rgb)
+    return hsl_to_rgb((h, s, 5))
+
+
+def suggest_role_source_indices(colors: list[tuple[int, int, int]]) -> dict[str, int]:
+    if not colors:
+        return {}
+
+    color_indices = list(range(len(colors)))
+    sorted_by_score = sorted(color_indices, key=lambda i: score_color(colors[i]), reverse=True)
+    primary_idx = sorted_by_score[0]
+    primary_hue = rgb_to_hsl(colors[primary_idx])[0]
+
+    secondary_candidates = sorted(
+        color_indices,
+        key=lambda i: hue_diff(rgb_to_hsl(colors[i])[0], primary_hue),
+        reverse=True,
+    )
+    secondary_idx = next((i for i in secondary_candidates if i != primary_idx), primary_idx)
+
+    def find_best_index(target_hue: float, category: str) -> int:
+        candidates = [i for i in color_indices if categorize_by_hue(colors[i]) == category]
+        if candidates:
+            return max(candidates, key=lambda i: rgb_to_hsl(colors[i])[1])
+        return min(color_indices, key=lambda i: hue_diff(rgb_to_hsl(colors[i])[0], target_hue))
+
+    sorted_by_lum = sorted(color_indices, key=lambda i: get_luminance(colors[i]))
+
+    return {
+        "Primary": primary_idx,
+        "Secondary": secondary_idx,
+        "Success": find_best_index(120, "green"),
+        "Info": find_best_index(195, "cyan"),
+        "Warning": find_best_index(45, "yellow"),
+        "Danger": find_best_index(0, "red"),
+        "Light": sorted_by_lum[-1],
+        "Dark": sorted_by_lum[0],
+    }
+
+
+def build_alias_rgb_map(colors: list[tuple[int, int, int]], indices: dict[str, int]) -> dict[str, tuple[int, int, int]]:
+    aliases = {}
+    for role, index in indices.items():
+        if 0 <= index < len(colors):
+            aliases[role] = colors[index]
+    return aliases
+
+
+def write_palette_css(
+    light_colors: list[tuple[int, int, int]],
+    dark_colors: list[tuple[int, int, int]],
+    light_indices: dict[str, int],
+    dark_indices: dict[str, int],
+) -> str:
+    lines = [
+        "/* GENERATED PALETTE SOURCES */",
+        "/* Edit the *-source variables to remap semantic roles. */",
+        "",
+        ":root {",
+    ]
+
+    for mode, colors in (("light", light_colors), ("dark", dark_colors)):
+        lines.append(f"    /* === {mode.upper()} CLUSTERS === */")
+        for index, rgb in enumerate(colors, start=1):
+            lines.append(f"    --{mode}-cluster-{index:03d}: {rgb_to_hex(rgb)};")
+        lines.append("")
+
+    for mode, indices in (("light", light_indices), ("dark", dark_indices)):
+        lines.append(f"    /* === {mode.upper()} ROLE SOURCES === */")
+        for role in CORE_ROLES:
+            index = indices.get(role)
+            if index is None:
+                continue
+            lines.append(
+                f"    --{mode}-{role.lower()}-source: var(--{mode}-cluster-{index + 1:03d});"
+            )
+        if mode == "light":
+            lines.append("")
+
+    lines.append("}")
+    return "\n".join(lines)
+
+
 def get_role_map(colors: list) -> dict:
     """Map clusters to semantic roles with improved harmonization."""
     sorted_by_score = sorted(colors, key=score_color, reverse=True)
     primary = sorted_by_score[0] if sorted_by_score else (13, 110, 253)
     p_h, p_s, p_l = rgb_to_hsl(primary)
-    
-    def hue_diff(h1, h2):
-        diff = abs(h1 - h2)
-        return min(diff, 360 - diff)
 
     secondary_candidates = sorted(colors, key=lambda c: hue_diff(rgb_to_hsl(c)[0], p_h), reverse=True)
     secondary = secondary_candidates[0] if len(secondary_candidates) > 1 else primary
@@ -248,21 +370,7 @@ def get_role_map(colors: list) -> dict:
         if candidates:
             # Pick most saturated candidate
             candidates.sort(key=lambda c: rgb_to_hsl(c)[1], reverse=True)
-            best_rgb = candidates[0]
-            h, s, l = rgb_to_hsl(best_rgb)
-            
-            # Anchor Logic: Harmonize the extracted color
-            # 1. Shift hue 30% towards canonical target
-            diff = target_hue - h
-            if diff > 180: diff -= 360
-            if diff < -180: diff += 360
-            refined_h = (h + diff * 0.3) % 360
-            
-            # 2. Ensure status-appropriate vibrancy (vibrant but not neon)
-            refined_s = max(40, min(s, 90))
-            refined_l = max(35, min(l, 60))
-            
-            return hsl_to_rgb((refined_h, refined_s, refined_l))
+            return refine_status_color(candidates[0], target_hue)
         
         # Fallback if category not in image: Use brand saturation, but role hue
         return hsl_to_rgb((fallback_h, min(p_s + 20, 85), 45))
@@ -282,17 +390,9 @@ def get_role_map(colors: list) -> dict:
     sorted_by_lum = sorted(colors, key=get_luminance)
     light = sorted_by_lum[-1] if sorted_by_lum else (248, 249, 250)
     dark = sorted_by_lum[0] if sorted_by_lum else (33, 37, 41)
-    
-    # Ensure usable backgrounds for WCAG AAA
-    # Light must be at least 0.85 luminance to allow dark text
-    if get_luminance(light) < 0.85:
-        h, s, l = rgb_to_hsl(light)
-        light = hsl_to_rgb((h, s, 95))
-    
-    # Dark must be at most 0.10 luminance to allow light text
-    if get_luminance(dark) > 0.10:
-        h, s, l = rgb_to_hsl(dark)
-        dark = hsl_to_rgb((h, s, 5))
+
+    light = normalize_light_role(light)
+    dark = normalize_dark_role(dark)
     
     return {
         "Primary": primary,
@@ -325,10 +425,85 @@ def parse_ctbs_variables(overrides_path: str) -> list[str]:
     return sorted(list(set(re.findall(r'--CTBS-[a-zA-Z0-9-]*', content))))
 
 
-def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars: list[str] | None = None) -> str:
-    light_map = get_role_map(light_colors)
-    dark_map = get_role_map(dark_colors) if dark_colors else None
+def resolve_palette_value(
+    raw_value: str,
+    mode: str,
+    clusters: dict[int, tuple[int, int, int]],
+) -> tuple[int, int, int]:
+    value = raw_value.strip()
+    if re.fullmatch(r"#[0-9a-fA-F]{6}", value):
+        return hex_to_rgb(value)
 
+    match = re.fullmatch(r"var\(--(light|dark)-cluster-(\d{3})\)", value)
+    if not match:
+        raise ValueError(f"Unsupported palette value: {raw_value}")
+
+    ref_mode, ref_index = match.group(1), int(match.group(2))
+    if ref_mode != mode:
+        raise ValueError(f"Palette source {raw_value} does not match {mode} mode")
+    if ref_index not in clusters:
+        raise ValueError(f"Palette source references missing cluster: {raw_value}")
+    return clusters[ref_index]
+
+
+def parse_palette_css(palette_path: str) -> tuple[list[tuple[int, int, int]], list[tuple[int, int, int]], dict[str, tuple[int, int, int]], dict[str, tuple[int, int, int]]]:
+    path = Path(palette_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Palette file not found: {palette_path}")
+
+    content = path.read_text()
+    cluster_matches = re.findall(r"--(light|dark)-cluster-(\d{3})\s*:\s*(#[0-9a-fA-F]{6})\s*;", content)
+    source_matches = re.findall(r"--(light|dark)-([a-z]+)-source\s*:\s*([^;]+);", content)
+
+    cluster_dicts = {"light": {}, "dark": {}}
+    for mode, raw_index, hex_value in cluster_matches:
+        cluster_dicts[mode][int(raw_index)] = hex_to_rgb(hex_value)
+
+    if not cluster_dicts["light"] or not cluster_dicts["dark"]:
+        raise ValueError("Palette file must define both light and dark clusters")
+
+    aliases = {"light": {}, "dark": {}}
+    for mode, raw_role, raw_value in source_matches:
+        role = raw_role.capitalize()
+        if role not in CORE_ROLES:
+            continue
+        aliases[mode][role] = resolve_palette_value(raw_value, mode, cluster_dicts[mode])
+
+    light_colors = [cluster_dicts["light"][index] for index in sorted(cluster_dicts["light"])]
+    dark_colors = [cluster_dicts["dark"][index] for index in sorted(cluster_dicts["dark"])]
+    return light_colors, dark_colors, aliases["light"], aliases["dark"]
+
+
+def build_role_map_from_palette(
+    colors: list[tuple[int, int, int]],
+    source_aliases: dict[str, tuple[int, int, int]],
+) -> dict[str, tuple[int, int, int]]:
+    role_map = get_role_map(colors)
+
+    for role, rgb in source_aliases.items():
+        if role in STATUS_ROLE_TARGETS:
+            role_map[role] = refine_status_color(rgb, STATUS_ROLE_TARGETS[role])
+        elif role == "Light":
+            role_map[role] = normalize_light_role(rgb)
+        elif role == "Dark":
+            role_map[role] = normalize_dark_role(rgb)
+        else:
+            role_map[role] = rgb
+
+    role_map["Blue"] = role_map["Primary"]
+    role_map["Green"] = role_map["Success"]
+    role_map["Red"] = role_map["Danger"]
+    role_map["Yellow"] = role_map["Warning"]
+    role_map["Cyan"] = role_map["Info"]
+    return role_map
+
+
+def generate_theme_css(
+    light_map: dict[str, tuple[int, int, int]],
+    dark_map: dict[str, tuple[int, int, int]] | None = None,
+    ctbs_vars: list[str] | None = None,
+    source_label: str = "palette.css",
+) -> str:
     body_bg = light_map["Light"]
     body_color = ensure_contrast(body_bg)
     white = (255, 255, 255)
@@ -666,7 +841,7 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
             if contrast_ratio(generated_rgb[var_name], bg) < 7.0:
                 generated_rgb[var_name] = ensure_contrast(bg, 7.0)
 
-    lines = ["/* GENERATED COLOR VARIABLES */", "/* Source: image */", "", ":root {"]
+    lines = ["/* GENERATED COLOR VARIABLES */", f"/* Source: {source_label} */", "", ":root {"]
     if ctbs_vars:
         lines.append("    /* === CTBS SEMANTIC VARIABLES === */")
         unique_vars = sorted(list(set(ctbs_vars)))
@@ -722,10 +897,30 @@ def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars:
     return "\n".join(lines)
 
 
+def generate_css(light_colors: list, dark_colors: list | None = None, ctbs_vars: list[str] | None = None) -> str:
+    light_map = get_role_map(light_colors)
+    dark_map = get_role_map(dark_colors) if dark_colors else None
+    return generate_theme_css(light_map, dark_map, ctbs_vars, source_label="images")
+
+
+def generate_css_from_palette(
+    light_colors: list[tuple[int, int, int]],
+    dark_colors: list[tuple[int, int, int]],
+    light_aliases: dict[str, tuple[int, int, int]],
+    dark_aliases: dict[str, tuple[int, int, int]],
+    ctbs_vars: list[str] | None = None,
+) -> str:
+    light_map = build_role_map_from_palette(light_colors, light_aliases)
+    dark_map = build_role_map_from_palette(dark_colors, dark_aliases)
+    return generate_theme_css(light_map, dark_map, ctbs_vars, source_label="palette.css")
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Generate Bootstrap 5 CSS variables from images")
-    parser.add_argument("image", help="Path to light source image")
-    parser.add_argument("--dark-image", help="Path to dark source image (optional)")
+    parser = argparse.ArgumentParser(description="Generate Bootstrap 5 CSS variables from images or palette.css")
+    parser.add_argument("--light-image", help="Path to light source image")
+    parser.add_argument("--dark-image", help="Path to dark source image")
+    parser.add_argument("--palette-file", help="Path to palette.css for theme generation")
+    parser.add_argument("--palette-output", help="Output path for generated palette.css")
     parser.add_argument("--blur", action="store_true", default=True, help="Apply blur before extraction")
     parser.add_argument("--no-blur", action="store_false", dest="blur", help="Skip blur")
     parser.add_argument("--output", "-o", help="Output file")
@@ -735,33 +930,83 @@ def main():
     parser.add_argument("--overrides-file", default="bs/bootstrap-overrides.css", help="Path to overrides file to detect used variables")
     
     args = parser.parse_args()
-    
+
     if args.dark_clusters is None:
         args.dark_clusters = args.clusters
-        
-    try:
+
+    has_images = bool(args.light_image or args.dark_image)
+    mode_count = sum(
+        [
+            1 if args.output and has_images else 0,
+            1 if args.palette_output and has_images else 0,
+            1 if args.palette_file else 0,
+        ]
+    )
+
+    if mode_count != 1:
+        parser.error(
+            "Choose exactly one mode: images to theme (--light-image/--dark-image with --output), "
+            "images to palette (--light-image/--dark-image with --palette-output), or palette to theme (--palette-file with --output)."
+        )
+
+    if has_images and not (args.light_image and args.dark_image):
+        parser.error("Both --light-image and --dark-image are required for image extraction modes")
+
+    if args.palette_file and has_images:
+        parser.error("--palette-file cannot be combined with --light-image or --dark-image")
+
+    if args.palette_file and args.palette_output:
+        parser.error("--palette-file cannot be combined with --palette-output")
+
+    if args.palette_file and not args.output:
+        parser.error("--palette-file requires --output")
+
+    if has_images and args.output and args.palette_output:
+        parser.error("Choose either --output or --palette-output for image extraction")
+
+    def load_ctbs_vars() -> list[str]:
         ctbs_vars = parse_ctbs_variables(args.vars_file)
-        # Also parse overrides to ensure we generate everything that's actually used
         if Path(args.overrides_file).exists():
             ctbs_vars.extend(parse_ctbs_variables(args.overrides_file))
-        
-        print(f"Extracting light colors from {args.image} ({args.clusters} clusters)...", file=sys.stderr)
-        light_colors = extract_colors(args.image, args.blur, args.clusters)
-        
-        dark_source = args.dark_image if args.dark_image else args.image
-        is_fallback = args.dark_image is None
-        fallback_msg = " (fallback from primary image)" if is_fallback else ""
-        print(f"Extracting dark colors from {dark_source}{fallback_msg} ({args.dark_clusters} clusters)...", file=sys.stderr)
-        dark_colors = extract_colors(dark_source, args.blur, args.dark_clusters)
-        
-        css = generate_css(light_colors, dark_colors, ctbs_vars)
-        
-        if args.output:
+        return ctbs_vars
+
+    try:
+        if args.palette_file:
+            ctbs_vars = load_ctbs_vars()
+            print(f"Loading palette from {args.palette_file}...", file=sys.stderr)
+            light_colors, dark_colors, light_aliases, dark_aliases = parse_palette_css(args.palette_file)
+            css = generate_css_from_palette(light_colors, dark_colors, light_aliases, dark_aliases, ctbs_vars)
             Path(args.output).write_text(css)
-            print(f"Written to: {args.output}", file=sys.stderr)
-        else:
-            print(css)
-            
+            print(f"Written theme to: {args.output}", file=sys.stderr)
+            return
+
+        print(f"Extracting light colors from {args.light_image} ({args.clusters} clusters)...", file=sys.stderr)
+        light_colors = extract_colors(args.light_image, args.blur, args.clusters)
+
+        print(f"Extracting dark colors from {args.dark_image} ({args.dark_clusters} clusters)...", file=sys.stderr)
+        dark_colors = extract_colors(args.dark_image, args.blur, args.dark_clusters)
+
+        light_indices = suggest_role_source_indices(light_colors)
+        dark_indices = suggest_role_source_indices(dark_colors)
+
+        if args.palette_output:
+            palette_css = write_palette_css(light_colors, dark_colors, light_indices, dark_indices)
+            Path(args.palette_output).write_text(palette_css)
+            print(f"Written palette to: {args.palette_output}", file=sys.stderr)
+            return
+
+        ctbs_vars = load_ctbs_vars()
+        css = generate_css_from_palette(
+            light_colors,
+            dark_colors,
+            build_alias_rgb_map(light_colors, light_indices),
+            build_alias_rgb_map(dark_colors, dark_indices),
+            ctbs_vars,
+        )
+
+        Path(args.output).write_text(css)
+        print(f"Written theme to: {args.output}", file=sys.stderr)
+
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)

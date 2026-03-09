@@ -1,6 +1,6 @@
 # Bootstrap Color Theming Toolset
 
-This project provides a comprehensive system for creating color overrides for Bootstrap 5.3.x. It extracts hardcoded colors from the original Bootstrap source and maps them to a semantic variable system that can be easily themed using images or custom palettes.
+This project provides a comprehensive system for creating color overrides for Bootstrap 5.3.x. It extracts hardcoded colors from the original Bootstrap source and maps them to a semantic variable system that can be themed from paired light/dark images or an editable `palette.css` file.
 
 ## Architecture
 
@@ -9,13 +9,14 @@ The system uses a 5-layer loading strategy for maximum flexibility:
 0.  **`bootstrap.css`**: The original Bootstrap framework (layout, components, logic).
 1.  **`ui-config.css`**: Global "knobs" for UI behavior (opacity, blur) independent of colors.
 2.  **`ctbs-variables.css`**: Defines the "Internal" semantic variables (`--CTBS-...`) with the original Bootstrap color values.
-3.  **`your-theme.css`** (Optional): A generated file that overrides the `--CTBS-...` variables (e.g., using colors from an image).
+3.  **`themes/<name>/<name>-theme.css`**: A generated file that overrides the `--CTBS-...` variables.
 4.  **`bootstrap-overrides.css`**: The "Patch" file that connects the `--CTBS-...` variables to the actual Bootstrap components.
 
 ## Features
 
 - **Automated WCAG AAA Compliance**: The generator intelligently adjusts color lightness to ensure a minimum 7:1 contrast ratio for all text elements.
 - **Image-to-Palette Generation**: Uses k-means clustering (up to 32 clusters) to extract harmonious colors from any background image.
+- **Editable Semantic Palette**: Writes a `palette.css` intermediary so you can remap extracted clusters before generating the final theme.
 - **Glassmorphism Support**: Native support for translucency and `backdrop-filter` for containers (Cards, Navbars, Modals, Dropdowns, List Groups, Toasts, Offcanvas).
 - **Independent UI Control**: Adjust UI opacity and blur globally via `ui-config.css` without re-running the generator.
 
@@ -33,25 +34,58 @@ This tool generates both `bs/bootstrap-overrides.css` and `bs/ctbs-variables.css
     -   `-v`, `--vars`: Output path for semantic internal variables (default: `bs/ctbs-variables.css`).
     -   `-o`, `--output`: Output path for component overrides (default: `bs/bootstrap-overrides.css`).
 
-### 2. ColorSim Image-Based Generator (`ColorSim.py`)
+### 2. ColorSim Palette and Theme Generator (`ColorSim.py`)
 
-Analyzes an image to extract a dominant color palette and maps it to the semantic variables identified during extraction. Supports dual-image awareness for separate light and dark mode assets.
+`ColorSim.py` now has three explicit modes. Extraction modes always require both a light and a dark image.
 
--   **Usage**: `source venv/bin/activate && python3 ColorSim.py <image_path> [--dark-image DARK_IMAGE] [-o OUTPUT]`
--   **Arguments**:
-    -   `image`: Path to the light-mode source image (e.g., `img/bg-lego-lightblue.png`).
-    -   `--dark-image`: Optional path to a dedicated dark-mode source image (e.g., `img/bg-lego-darkblue.png`).
-    -   `-o`, `--output`: Output path for the generated theme (e.g., `bs/lego-theme.css`).
-    -   `-c`, `--clusters`: Number of color clusters to sample for light mode (default: 12).
-    -   `--dark-clusters`: Number of color clusters to sample for dark mode (default: 12).
-    -   `--no-blur`: Skip the Gaussian blur pre-processing step.
-    -   `--vars-file`: Path to the `ctbs-variables.css` file to extract variable names from.
+- **Mode 1 - Images to ready theme**
+  - `source venv/bin/activate && python3 ColorSim.py --light-image themes/lego/bg-light.png --dark-image themes/lego/bg-dark.png -o themes/lego/lego-theme.css`
+- **Mode 2 - Images to `palette.css`**
+  - `source venv/bin/activate && python3 ColorSim.py --light-image themes/lego/bg-light.png --dark-image themes/lego/bg-dark.png --palette-output themes/lego/palette.css`
+- **Mode 3 - `palette.css` to ready theme**
+  - `source venv/bin/activate && python3 ColorSim.py --palette-file themes/lego/palette.css -o themes/lego/lego-theme.css`
+
+- **Arguments**:
+  - `--light-image`: Path to the light-mode source image.
+  - `--dark-image`: Path to the dark-mode source image.
+  - `--palette-file`: Path to an editable `palette.css` file.
+  - `--palette-output`: Output path for generated `palette.css`.
+  - `-o`, `--output`: Output path for the generated theme CSS.
+  - `-c`, `--clusters`: Number of clusters to sample for light mode (default: `12`).
+  - `--dark-clusters`: Number of clusters to sample for dark mode (default: `--clusters`).
+  - `--no-blur`: Skip the Gaussian blur pre-processing step.
+  - `--vars-file`: Path to the `ctbs-variables.css` file to extract variable names from.
+
+The generated `palette.css` contains:
+
+```css
+:root {
+    --light-cluster-001: #abcdef;
+    --dark-cluster-001: #012345;
+
+    --light-primary-source: var(--light-cluster-002);
+    --dark-primary-source: var(--dark-cluster-003);
+}
+```
+
+Edit the `*-source` variables to remap semantic roles without re-running cluster extraction.
+
+## Theme Layout
+
+Bundled themes now live under `themes/<name>/`.
+
+- `bg-light.*`: committed light source image
+- `bg-dark.*`: committed dark source image
+- `palette.css`: committed editable semantic palette source
+- `<name>-theme.css`: generated theme output
+
+Currently active dual-image themes: `alien`, `krokus`, `lego`.
 
 ## Live Preview
 
 **https://georgernstgraf.github.io/color-tool/**
 
-The preview page showcases every Bootstrap 5.3 component with theme-relevant styling. Use the controls to switch between themes (Herbst, Krokus, Sommer, Lego, Loewe, Wave, Urania, Alien), toggle light/dark mode, and adjust glassmorphism opacity and blur in real time. Preferences are persisted in localStorage.
+The preview page showcases every Bootstrap 5.3 component with theme-relevant styling. Use the controls to switch between the active dual-image themes (`Krokus`, `Lego`, `Alien Skyline`), toggle light/dark mode, and adjust glassmorphism opacity and blur in real time. Preferences are persisted in localStorage.
 
 ### Adjusting UI Opacity
 You can adjust the transparency of all UI components (Cards, Modals, Dropdowns, etc.) across all themes simultaneously by editing **`bs/ui-config.css`**:
@@ -64,55 +98,71 @@ You can adjust the transparency of all UI components (Cards, Modals, Dropdowns, 
 
 Below are practical examples of how to generate themes for different scenarios.
 
-### 1. Simple Theme Generation (Single Image)
-Generate a theme from a single image. The tool will automatically create appropriate light and dark variations from this one source.
+### 1. Create `palette.css` from two images
 
 ```bash
 # Activate environment
 source venv/bin/activate
 
-# Generate theme
-python3 ColorSim.py img/bg-krokus.jpg -o bs/my-krokus-theme.css
+# Extract clusters and suggested semantic mappings
+python3 ColorSim.py \
+    --light-image themes/krokus/bg-light.jpg \
+    --dark-image themes/krokus/bg-dark.jpg \
+    --palette-output themes/krokus/palette.css
 ```
 
-### 2. Dual-Asset Theme (Separate Light/Dark Images)
-For the best results, use separate assets for light and dark modes. This allows the theme to match the artistic intent of both backgrounds.
+### 2. Generate a theme directly from two images
 
 ```bash
-# Generate a theme with dedicated dark-mode extraction
-python3 ColorSim.py img/bg-lego-lightblue.png \
-    --dark-image img/bg-lego-darkblue.png \
-    -o bs/my-lego-theme.css
+# Generate a ready-to-use theme in one step
+python3 ColorSim.py \
+    --light-image themes/lego/bg-light.png \
+    --dark-image themes/lego/bg-dark.png \
+    -o themes/lego/lego-theme.css
 ```
 
-### 3. High-Fidelity Extraction (More Clusters)
+### 3. Generate a theme from edited `palette.css`
+
+```bash
+# Edit themes/alien/palette.css first, then generate theme CSS
+python3 ColorSim.py \
+    --palette-file themes/alien/palette.css \
+    -o themes/alien/alien-theme.css
+```
+
+### 4. High-Fidelity Extraction (More Clusters)
 If your image has a very diverse color palette and you want the tool to pick up more subtle hues for secondary roles, increase the cluster count.
 
 ```bash
-# Sample 20 colors for more granular role mapping
-python3 ColorSim.py img/forest-landscape.jpg \
-    -c 20 \
-    -o bs/forest-theme.css
+python3 ColorSim.py \
+    --light-image themes/alien/bg-light.jpg \
+    --dark-image themes/alien/bg-dark.jpg \
+    -c 32 \
+    --dark-clusters 32 \
+    --palette-output themes/alien/palette.css
 ```
 
-### 4. Raw Image Processing (No Blur)
+### 5. Raw Image Processing (No Blur)
 By default, the tool applies a blur to the image to find "average" dominant colors. For pixel art or images where you want exact sharp colors, disable the blur.
 
 ```bash
 # Extract exact dominant colors without pre-blurring
-python3 ColorSim.py img/pixel-art-bg.png \
+python3 ColorSim.py \
+    --light-image themes/krokus/bg-light.jpg \
+    --dark-image themes/krokus/bg-dark.jpg \
     --no-blur \
-    -o bs/pixel-theme.css
+    --palette-output themes/krokus/palette.css
 ```
 
-### 5. Custom Variable Mapping
+### 6. Custom Variable Mapping
 If you have modified `ctbs-variables.css` or created your own semantic map, specify the source file.
 
 ```bash
 # Generate theme using a custom semantic variable definition file
-python3 ColorSim.py img/custom.jpg \
+python3 ColorSim.py \
+    --palette-file themes/lego/palette.css \
     --vars-file my-custom-map.css \
-    -o bs/custom-theme.css
+    -o themes/lego/custom-theme.css
 ```
 
 ## Setup
@@ -126,7 +176,7 @@ All Python scripts in this repository must be started with `venv` activated.
 
 ## Browser-Automated WCAG Checks
 
-The test suite includes `test_browser_wcag.py`, which opens `index.html` in headless Chromium via Playwright, scrapes visible text nodes from rendered elements, and validates text/background contrast for all bundled themes in both light and dark mode.
+The test suite includes `test_browser_wcag.py`, which opens `index.html` in headless Chromium via Playwright, scrapes visible text nodes from rendered elements, and validates text/background contrast for all active bundled themes in both light and dark mode.
 
 - It serves the project with a local HTTP server during the test run (no manual server setup required).
 - It checks computed colors from actually rendered elements (not just raw CSS variables).
@@ -170,7 +220,15 @@ Autumn, Day, "Primary", Button, Outline
 # 1. Extract base mapping and component overrides from Bootstrap
 python3 extract_bootstrap_colors.py
 
-# 2. Generate a custom theme from an image
+# 2. Generate or update palette.css from dual-mode source images
 source venv/bin/activate
-python3 ColorSim.py img/bg-krokus.jpg -o bs/krokus-theme.css
+python3 ColorSim.py \
+    --light-image themes/krokus/bg-light.jpg \
+    --dark-image themes/krokus/bg-dark.jpg \
+    --palette-output themes/krokus/palette.css
+
+# 3. Generate the final theme CSS from palette.css
+python3 ColorSim.py \
+    --palette-file themes/krokus/palette.css \
+    -o themes/krokus/krokus-theme.css
 ```

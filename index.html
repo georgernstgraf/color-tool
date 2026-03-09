@@ -19,7 +19,7 @@
     <!-- Theme placeholder (will be swapped by specific files) -->
     <link id="themeStylesheet"
           rel="stylesheet"
-          href="bs/herbst-theme.css">
+          href="themes/krokus/krokus-theme.css">
 
     <!-- Component Overrides (Apply variables to components) -->
     <link rel="stylesheet"
@@ -131,12 +131,7 @@
                 </div>
                 <select id="themeSelect"
                         class="form-select w-auto">
-                    <option value="herbst">Autumn</option>
-                    <option value="krokus">Spring</option>
-                    <option value="sommer">Summer</option>
-                    <option value="loewe">Dandelion</option>
-                    <option value="urania">Urania</option>
-                    <option value="wave">Welle</option>
+                    <option value="krokus">Krokus</option>
                     <option value="lego">Lego</option>
                     <option value="alien">Alien Skyline</option>
                 </select>
@@ -1526,19 +1521,14 @@
 
         // Background image mapping
         const backgrounds = {
-            'herbst': { light: 'img/herbst.jpg', dark: 'img/herbst.jpg' },
-            'krokus': { light: 'img/bg-krokus.jpg', dark: 'img/bg-krokus.jpg' },
-            'sommer': { light: 'img/sommer.jpg', dark: 'img/sommer.jpg' },
-            'lego': { light: 'img/bg-lego-lightblue.png', dark: 'img/bg-lego-darkblue.png' },
-            'alien': { light: 'img/bg-alien-day.jpg', dark: 'img/bg-alien-night.jpg' },
-            'loewe': { light: 'img/loewe.jpg', dark: 'img/loewe.jpg' },
-            'wave': { light: 'img/wave.jpg', dark: 'img/wave.jpg' },
-            'urania': { light: 'img/bg-urania.jpg', dark: 'img/bg-urania.jpg' }
+            'krokus': { light: 'themes/krokus/bg-light.jpg', dark: 'themes/krokus/bg-dark.jpg' },
+            'lego': { light: 'themes/lego/bg-light.png', dark: 'themes/lego/bg-dark.png' },
+            'alien': { light: 'themes/alien/bg-light.jpg', dark: 'themes/alien/bg-dark.jpg' }
         };
 
         function updateTheme() {
             const theme = themeSelect.value;
-            themeStylesheet.href = `bs/${theme}-theme.css`;
+            themeStylesheet.href = `themes/${theme}/${theme}-theme.css`;
             themeTitle.innerText = theme.charAt(0).toUpperCase() + theme.slice(1) + " Theme";
 
             const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';

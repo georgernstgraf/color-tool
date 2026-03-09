@@ -10,7 +10,7 @@ Each entry documents WHAT was decided and WHY.
 - **Tradeoff**: Themeing breaks if consumers change the file order
 
 ## 2026-03-09: Keep generated theme CSS out of Git
-- **Choice**: Treat `bs/bootstrap-overrides.css`, `bs/ctbs-variables.css`, and `bs/*-theme.css` as regenerated artifacts
+- **Choice**: Treat `bs/bootstrap-overrides.css`, `bs/ctbs-variables.css`, and `themes/<name>/<name>-theme.css` as regenerated artifacts while committing `themes/<name>/palette.css`
 - **Reason**: The scripts, source images, and Bootstrap input remain the source of truth and avoid generated diff churn
 - **Considered**: Committing generated CSS alongside the source scripts
 - **Tradeoff**: Tests, previews, and deployments must regenerate assets before use
@@ -74,3 +74,27 @@ Each entry documents WHAT was decided and WHY.
 - **Reason**: Deployment stays reproducible from source scripts and images while the main branch avoids generated assets
 - **Considered**: Committing generated CSS and publishing it directly
 - **Tradeoff**: CI must keep the generation environment working and aligned with local tooling
+
+## 2026-03-09: Make dual-image input mandatory for extraction
+- **Choice**: Require both `--light-image` and `--dark-image` for any image-based ColorSim mode and remove the dark fallback-to-light behavior
+- **Reason**: Dark themes must come from explicit dark assets instead of hallucinated reuse of the light image
+- **Considered**: Keeping the existing fallback or auto-deriving dark palettes from a single source image
+- **Tradeoff**: Themes without matching dark assets are intentionally left in an error or unsupported state
+
+## 2026-03-09: Use `palette.css` as the editable theme intermediary
+- **Choice**: Insert `palette.css` between cluster extraction and final theme generation and commit it as the canonical per-theme color source
+- **Reason**: Users need a stable file where they can remap semantic roles like Primary and Secondary without re-running extraction
+- **Considered**: Hiding role mapping inside heuristics or using cluster order alone as the edit mechanism
+- **Tradeoff**: The pipeline gains an extra artifact and parser that must stay in sync with the theme generator
+
+## 2026-03-09: Move bundled themes under `themes/`
+- **Choice**: Store each bundled theme in `themes/<name>/` with `bg-light.*`, `bg-dark.*`, `palette.css`, and generated `<name>-theme.css`
+- **Reason**: Theme assets, editable palettes, and generated outputs now belong together and the preview can load them directly from one directory tree
+- **Considered**: Keeping generated theme CSS in `bs/` and source images in `img/`
+- **Tradeoff**: Preview paths, tests, deployment, and generation scripts all need to target the new directory structure
+
+## 2026-03-09: Keep palette clusters numbered
+- **Choice**: Store extracted palette entries as numbered variables like `--light-cluster-001` and `--dark-cluster-001`, with semantic remapping handled only by `*-source` aliases
+- **Reason**: Different themes can produce different actual cluster counts, so numbering preserves the raw extraction output while keeping semantic remapping stable
+- **Considered**: Encoding semantic meaning directly into cluster variable names or relying on implicit cluster order alone
+- **Tradeoff**: `palette.css` has two layers to understand: raw numbered clusters and explicit semantic aliases

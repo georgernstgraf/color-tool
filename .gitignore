@@ -13,3 +13,4 @@ Thumbs.db
 bs/bootstrap-overrides.css
 bs/ctbs-variables.css
 bs/*-theme.css
+themes/*/*-theme.css

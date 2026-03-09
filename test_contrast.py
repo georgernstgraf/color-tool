@@ -12,7 +12,7 @@ from pathlib import Path
 def test_variable_coverage():
     print("\n--- VARIABLE COVERAGE TEST ---")
     overrides_path = Path("bs/bootstrap-overrides.css")
-    theme_paths = list(Path("bs").glob("*-theme.css"))
+    theme_paths = sorted(Path("themes").glob("*/*-theme.css"))
     
     if not overrides_path.exists():
         assert False, "bootstrap-overrides.css not found"
@@ -40,7 +40,7 @@ def test_variable_coverage():
 
 def test_actual_theme_contrast():
     print("\n--- ACTUAL THEME CONTRAST TEST ---")
-    theme_paths = list(Path("bs").glob("*-theme.css"))
+    theme_paths = sorted(Path("themes").glob("*/*-theme.css"))
     
     pairs_to_check = [
         # --- Original pairs ---
@@ -129,7 +129,7 @@ def test_actual_theme_contrast():
 def test_progress_bar_contrast():
     """Check progress-bar fill vs track contrast (WCAG 2.1 SC 1.4.11: >= 3.0)."""
     print("\n--- PROGRESS BAR CONTRAST TEST (non-text >= 3.0) ---")
-    theme_paths = list(Path("bs").glob("*-theme.css"))
+    theme_paths = sorted(Path("themes").glob("*/*-theme.css"))
     NON_TEXT_MIN = 3.0
 
     # Light mode: bar fill vs track (SecondaryBgSubtle)
@@ -213,4 +213,3 @@ if __name__ == "__main__":
     test_actual_theme_contrast()
     test_progress_bar_contrast()
     print("\nAll tests passed successfully.")
-

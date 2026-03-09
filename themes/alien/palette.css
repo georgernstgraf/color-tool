@@ -1,0 +1,90 @@
+/* GENERATED PALETTE SOURCES */
+/* Edit the *-source variables to remap semantic roles. */
+
+:root {
+    /* === LIGHT CLUSTERS === */
+    --light-cluster-001: #39464e;
+    --light-cluster-002: #c2ccd1;
+    --light-cluster-003: #414f6c;
+    --light-cluster-004: #9da7b0;
+    --light-cluster-005: #709bc0;
+    --light-cluster-006: #3880bb;
+    --light-cluster-007: #70afdd;
+    --light-cluster-008: #a5bec5;
+    --light-cluster-009: #82888d;
+    --light-cluster-010: #546985;
+    --light-cluster-011: #a3c6dc;
+    --light-cluster-012: #4c9bd7;
+    --light-cluster-013: #849da3;
+    --light-cluster-014: #5a6868;
+    --light-cluster-015: #646251;
+    --light-cluster-016: #827c56;
+    --light-cluster-017: #bebdad;
+    --light-cluster-018: #6c8ea0;
+    --light-cluster-019: #bfb591;
+    --light-cluster-020: #6f7a89;
+    --light-cluster-021: #9b9479;
+    --light-cluster-022: #8fbede;
+    --light-cluster-023: #6e7655;
+    --light-cluster-024: #627ea6;
+    --light-cluster-025: #5f7d90;
+    --light-cluster-026: #bfab74;
+    --light-cluster-027: #b594a2;
+    --light-cluster-028: #448cd4;
+    --light-cluster-029: #93d4ee;
+    --light-cluster-030: #949c5c;
+    --light-cluster-031: #6c546c;
+
+    /* === DARK CLUSTERS === */
+    --dark-cluster-001: #987776;
+    --dark-cluster-002: #666794;
+    --dark-cluster-003: #4b4c72;
+    --dark-cluster-004: #6f5b69;
+    --dark-cluster-005: #514553;
+    --dark-cluster-006: #2f3558;
+    --dark-cluster-007: #121419;
+    --dark-cluster-008: #555559;
+    --dark-cluster-009: #2e2e40;
+    --dark-cluster-010: #3f3d56;
+    --dark-cluster-011: #212746;
+    --dark-cluster-012: #7a7d78;
+    --dark-cluster-013: #303c43;
+    --dark-cluster-014: #695032;
+    --dark-cluster-015: #9c7ead;
+    --dark-cluster-016: #222d36;
+    --dark-cluster-017: #996e3c;
+    --dark-cluster-018: #161a30;
+    --dark-cluster-019: #3f362e;
+    --dark-cluster-020: #181a24;
+    --dark-cluster-021: #0c1424;
+    --dark-cluster-022: #1b2435;
+    --dark-cluster-023: #4c448c;
+    --dark-cluster-024: #242335;
+    --dark-cluster-025: #1b1c3c;
+    --dark-cluster-026: #38346d;
+    --dark-cluster-027: #3f3a3c;
+    --dark-cluster-028: #653c43;
+    --dark-cluster-029: #3c2c41;
+    --dark-cluster-030: #8c545c;
+    --dark-cluster-031: #0d0c24;
+
+    /* === LIGHT ROLE SOURCES === */
+    --light-primary-source: var(--light-cluster-029);
+    --light-secondary-source: var(--light-cluster-031);
+    --light-success-source: var(--light-cluster-023);
+    --light-info-source: var(--light-cluster-022);
+    --light-warning-source: var(--light-cluster-026);
+    --light-danger-source: var(--light-cluster-027);
+    --light-light-source: var(--light-cluster-029);
+    --light-dark-source: var(--light-cluster-001);
+
+    /* === DARK ROLE SOURCES === */
+    --dark-primary-source: var(--dark-cluster-023);
+    --dark-secondary-source: var(--dark-cluster-015);
+    --dark-success-source: var(--dark-cluster-016);
+    --dark-info-source: var(--dark-cluster-013);
+    --dark-warning-source: var(--dark-cluster-014);
+    --dark-danger-source: var(--dark-cluster-030);
+    --dark-light-source: var(--dark-cluster-012);
+    --dark-dark-source: var(--dark-cluster-031);
+}

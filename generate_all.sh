@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 # Configuration
 INPUT_BOOTSTRAP="bs/bootstrap-5.3.8.css"
@@ -17,36 +17,19 @@ python extract_bootstrap_colors.py -i "$INPUT_BOOTSTRAP" -v "$VARS_FILE" -o "$OV
 
 echo "2. Generating Themes..."
 
-# Lego
-echo "   - Lego"
-python ColorSim.py img/bg-lego-lightblue.png --dark-image img/bg-lego-darkblue.png --output bs/lego-theme.css --clusters 12
+for theme_dir in themes/*; do
+	[ -d "$theme_dir" ] || continue
+	theme_name=$(basename "$theme_dir")
+	palette_file="$theme_dir/palette.css"
+	output_file="$theme_dir/${theme_name}-theme.css"
 
-# Aliens
-echo "   - Aliens"
-python ColorSim.py img/bg-alien-day.jpg --dark-image img/bg-alien-night.jpg --output bs/alien-theme.css --clusters 32 --dark-clusters 32
+	if [ ! -f "$palette_file" ]; then
+		echo "   - Skipping $theme_name (missing palette.css)"
+		continue
+	fi
 
-# Krokus
-echo "   - Krokus"
-python ColorSim.py img/bg-krokus.jpg --output bs/krokus-theme.css --clusters 12
-
-# Herbst
-echo "   - Herbst"
-python ColorSim.py img/herbst.jpg --output bs/herbst-theme.css --clusters 12
-
-# Sommer
-echo "   - Sommer"
-python ColorSim.py img/sommer.jpg --output bs/sommer-theme.css --clusters 12
-
-# Loewe
-echo "   - Loewe"
-python ColorSim.py img/loewe.jpg --output bs/loewe-theme.css --clusters 12
-
-# Wave
-echo "   - Wave"
-python ColorSim.py img/wave.jpg --output bs/wave-theme.css --clusters 12
-
-# Urania
-echo "   - Urania"
-python ColorSim.py img/bg-urania.jpg --output bs/urania-theme.css --clusters 12
+	echo "   - $theme_name"
+	python ColorSim.py --palette-file "$palette_file" --output "$output_file"
+done
 
 echo "Done!"
