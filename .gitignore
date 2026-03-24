@@ -14,3 +14,6 @@ bs/bootstrap-overrides.css
 bs/ctbs-variables.css
 bs/*-theme.css
 themes/*/theme.css
+
+# Symlinked skills from opencode-helpers (not tracked)
+skills/
