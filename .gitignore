@@ -16,4 +16,6 @@ bs/*-theme.css
 themes/*/theme.css
 
 # Symlinked skills from opencode-helpers (not tracked)
-skills/
+# No trailing slash: the entry is a symlink, not a directory, so `skills/`
+# would fail to match it and leave it untracked-but-dirty.
+skills
